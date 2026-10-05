@@ -1,12 +1,17 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+﻿FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
+# Copia tudo da raiz da solução
 COPY . .
+
+# Restaura dependências
 RUN dotnet restore
 
+# Compila o projeto BlazorApp2
 RUN dotnet publish BlazorApp2/BlazorApp2.csproj -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview
+# Imagem de execução final do ASP.NET 9.0
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/publish .
 
