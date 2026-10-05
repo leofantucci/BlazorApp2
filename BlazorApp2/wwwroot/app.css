@@ -1,12 +1,7 @@
-* {
-    box-sizing: border-box;
-}
-
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-
-.corSecundaria {
+.corSecundaria{
     background-color: #261424;
 }
 
@@ -19,8 +14,8 @@ a, .btn-link {
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 25%;
-    height: auto;
+    width: 306px;
+    height: 300px;
     margin-bottom: 25px;
 
     display: flex;
@@ -38,11 +33,13 @@ a, .btn-link {
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 20%;
-    height: auto;
+    width: 250px;
+    height: 250px;
     margin-bottom: 25px;
     margin-right: 15px;
     margin-left: 15px;
+
+    display: flex;
 
     display: flex;
     justify-content: center; /* Centraliza horizontalmente (na linha) */
@@ -54,31 +51,30 @@ a, .btn-link {
     font-size: 12px;
 }
 
-.sera {
+.sera{
     display: flex;
     flex-direction: column;
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
 }
 
-.container-personalizado {
+.container-personalizado{
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 100%;
-    height: auto;
+    width: 104%;
+    height: 700px;
 
     display: flex;
     flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
     gap: 16px;       /* Espaço entre colunas e linhas */
 }
-
 .container-personalizado-2 {
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 100%;
-    height: auto;
+    width: 104%;
+    height: auto; /* <-- Mude de 125px para auto para não travar a altura */
     min-height: 125px;
 
     display: flex;
@@ -96,26 +92,27 @@ a, .btn-link {
     width: 100%;
 }
 
-.centralizado {
+.centralizado{
     display: flex;
     justify-content: center; /* Centraliza horizontalmente (na linha) */
     align-items: center;     /* Centraliza verticalmente */
     flex-direction: column;
 }
 
-.entrada {
+.entrada{
     display: block;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+    width: 320px;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 22px;
-    width: 35%;
-    height: auto;
+    width: 450px;
+    height: 75px;
     margin-bottom: 25px;
 }
 
-.blueprint {
+.blueprint{
     background-color: #261424;
 
     display: flex;
@@ -123,31 +120,32 @@ a, .btn-link {
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
     width: 44%;
-    height: auto;
+    height: 500px;
+    background-color: #261424;
     color: white;
     border-radius: 50px;
     margin-bottom: 25px;
 }
 
-.blueprint-1 {
+.blueprint-1{
     padding-top: 22px;
-}
 
-.blueprint-2 {
+}
+.blueprint-2{
     padding-top: 10px;
     padding-bottom: 5px;
 }
-
-.blueprint-3 {
+.blueprint-3{
     margin-top: -33px;
     margin-bottom: 22px;
     width: 77%;
-    height: auto;
+    height: 730px;
     padding-top: 22px;
     padding-bottom: 0px;
 }
 
-.texto-padrao-1 {
+
+.texto-padrao-1{
     align-items: center;
     text-align: center;
     color: #ffffff;
@@ -155,58 +153,60 @@ a, .btn-link {
     font-size: 33px;
 }
 
-.foto {
-    width: 15%;
-    height: auto;
+.foto{
+    width: 200px;
+    height: 200px;
     margin-bottom: 10px;
 }
 
-.foto-2 {
-    width: 6%;
-    height: auto;
+.foto-2{
+    width: 75px;
+    height: 75px;
     margin-bottom: 10px;
 }
 
-.foto-3 {
-    width: 2.5%;
-    height: auto;
+.foto-3{
+    height: 30px;
+    width: 30px;
 }
 
-td, th {
+td,th{
     text-align: center;
-    vertical-align: middle;
+    vertical-align-align: middle;
 }
 
 .btn-personalizado {
     background-color: #261424;
+
     color: #fff;
     border-color: #ffffff;
-    width: 15%;
-    height: auto;
+    width: 200px;
+    height: 75px;
     margin-bottom: 25px;
     text-align: center;
     font-size: 28px;
     padding-top: 18px;
 }
 
-.btn-secondary {
-    width: 12%;
-    height: auto;
+.btn-secondary{
+    width: 175px;
+    height:50px;
     padding-top: 15px;
 }
 
-.btn-personalizado:hover {
+.btn-personalizado:hover{
     background-color: #ffffff;
     color: #261424;
 }
 
-.faixaNinja {
+.faixaNinja{
     background-color: #261424;
+
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 100%;
-    height: auto;
+    width: 104%;
+    height: 125px;
 
     display: flex;
     flex-direction: column;
@@ -221,7 +221,7 @@ td, th {
 }
 
 .top-row a.navbar-brand.navbar-texto-1 {
-    font-size: 2.5rem !important;
+    font-size: 2.5rem !important; /* ~40px - ajuste como preferir */
     color: #ffffff !important;
     line-height: normal;
     font-weight: bolder;
@@ -258,7 +258,7 @@ h1:focus {
 }
 
 .blazor-error-boundary::after {
-    content: "An error has occurred.";
+    content: "An error has occurred."
 }
 
 .darker-border-checkbox.form-check-input {
@@ -274,20 +274,22 @@ h1:focus {
     text-align: start;
 }
 
-.atalho_visualizar {
+.atalho_visualizar{
     color: deeppink;
 }
 
-body {
-    background: #0a53be;
+body{
+    background: #401F3E;
+    /*background: #0a53be;*/
     color: white;
 }
-
+/* Barra do topo (onde fica o texto Aplicativo) */
 .top-row,
 .top-row.navbar {
-    background-color: #401F3E !important;
+    background-color: #401F3E!important;
 }
 
+/* Fundo da barra de navegação/menu lateral */
 .sidebar,
 .nav-scrollable {
     background-color: #261424 !important;
