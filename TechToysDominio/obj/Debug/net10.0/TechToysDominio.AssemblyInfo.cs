@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TechToysDominio")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+98c608cf639a2a63cce502d47ca3d1295e5ad438")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4addad19082d95376d514298331deee6fa16bc25")]
 [assembly: System.Reflection.AssemblyProductAttribute("TechToysDominio")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TechToysDominio")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

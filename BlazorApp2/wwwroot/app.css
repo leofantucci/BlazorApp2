@@ -1,7 +1,12 @@
+* {
+    box-sizing: border-box;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-.corSecundaria{
+
+.corSecundaria {
     background-color: #261424;
 }
 
@@ -14,15 +19,15 @@ a, .btn-link {
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 306px;
-    height: 300px;
+    width: 25%;
+    height: auto;
     margin-bottom: 25px;
-    
+
     display: flex;
     flex-direction: column;
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
-    
+
     border-radius: 50px;
     padding-top: 25px;
     font-weight: bold;
@@ -33,13 +38,11 @@ a, .btn-link {
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 250px;
-    height: 250px;
+    width: 20%;
+    height: auto;
     margin-bottom: 25px;
     margin-right: 15px;
     margin-left: 15px;
-
-    display: flex;
 
     display: flex;
     justify-content: center; /* Centraliza horizontalmente (na linha) */
@@ -51,30 +54,31 @@ a, .btn-link {
     font-size: 12px;
 }
 
-.sera{
+.sera {
     display: flex;
     flex-direction: column;
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
 }
 
-.container-personalizado{
+.container-personalizado {
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 104%;
-    height: 700px;
+    width: 100%;
+    height: auto;
 
     display: flex;
     flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
     gap: 16px;       /* Espaço entre colunas e linhas */
 }
+
 .container-personalizado-2 {
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 104%;
-    height: auto; /* <-- Mude de 125px para auto para não travar a altura */
+    width: 100%;
+    height: auto;
     min-height: 125px;
 
     display: flex;
@@ -92,60 +96,58 @@ a, .btn-link {
     width: 100%;
 }
 
-.centralizado{
+.centralizado {
     display: flex;
     justify-content: center; /* Centraliza horizontalmente (na linha) */
     align-items: center;     /* Centraliza verticalmente */
     flex-direction: column;
 }
 
-.entrada{
+.entrada {
     display: block;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    width: 320px;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 22px;
-    width: 450px;
-    height: 75px;
+    width: 35%;
+    height: auto;
     margin-bottom: 25px;
 }
 
-.blueprint{
+.blueprint {
     background-color: #261424;
-    
+
     display: flex;
     flex-direction: column;
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
     width: 44%;
-    height: 500px;
-    background-color: #261424;
+    height: auto;
     color: white;
     border-radius: 50px;
     margin-bottom: 25px;
 }
 
-.blueprint-1{
+.blueprint-1 {
     padding-top: 22px;
-    
 }
-.blueprint-2{
+
+.blueprint-2 {
     padding-top: 10px;
     padding-bottom: 5px;
 }
-.blueprint-3{
+
+.blueprint-3 {
     margin-top: -33px;
     margin-bottom: 22px;
     width: 77%;
-    height: 730px;
+    height: auto;
     padding-top: 22px;
     padding-bottom: 0px;
 }
 
-
-.texto-padrao-1{
+.texto-padrao-1 {
     align-items: center;
     text-align: center;
     color: #ffffff;
@@ -153,66 +155,64 @@ a, .btn-link {
     font-size: 33px;
 }
 
-.foto{
-    width: 200px;
-    height: 200px;
+.foto {
+    width: 15%;
+    height: auto;
     margin-bottom: 10px;
 }
 
-.foto-2{
-    width: 75px;
-    height: 75px;
+.foto-2 {
+    width: 6%;
+    height: auto;
     margin-bottom: 10px;
 }
 
-.foto-3{
-    height: 30px;
-    width: 30px;
+.foto-3 {
+    width: 2.5%;
+    height: auto;
 }
 
-td,th{
+td, th {
     text-align: center;
-    vertical-align-align: middle;
+    vertical-align: middle;
 }
 
 .btn-personalizado {
     background-color: #261424;
-    
     color: #fff;
     border-color: #ffffff;
-    width: 200px;
-    height: 75px;
+    width: 15%;
+    height: auto;
     margin-bottom: 25px;
     text-align: center;
     font-size: 28px;
     padding-top: 18px;
 }
 
-.btn-secondary{
-    width: 175px;
-    height:50px;
+.btn-secondary {
+    width: 12%;
+    height: auto;
     padding-top: 15px;
 }
 
-.btn-personalizado:hover{
+.btn-personalizado:hover {
     background-color: #ffffff;
     color: #261424;
 }
 
-.faixaNinja{
+.faixaNinja {
     background-color: #261424;
-    
     margin-top: -20px;
     margin-left: -33px;
     padding-left: 33px;
-    width: 104%;
-    height: 125px;
-    
+    width: 100%;
+    height: auto;
+
     display: flex;
     flex-direction: column;
     align-items: center;    /* Centraliza os itens horizontalmente */
     vertical-align: middle;
-    
+
     color: white;
     padding-top: 20px;
     font-size: 77px;
@@ -221,14 +221,14 @@ td,th{
 }
 
 .top-row a.navbar-brand.navbar-texto-1 {
-    font-size: 2.5rem !important; /* ~40px - ajuste como preferir */
+    font-size: 2.5rem !important;
     color: #ffffff !important;
     line-height: normal;
     font-weight: bolder;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 .content {
@@ -257,9 +257,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred.";
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -274,22 +274,20 @@ h1:focus {
     text-align: start;
 }
 
-.atalho_visualizar{
+.atalho_visualizar {
     color: deeppink;
 }
 
-body{
-    /*background: #401F3E;*/
+body {
     background: #0a53be;
     color: white;
 }
-/* Barra do topo (onde fica o texto Aplicativo) */
+
 .top-row,
 .top-row.navbar {
-    background-color: #401F3E!important;
+    background-color: #401F3E !important;
 }
 
-/* Fundo da barra de navegação/menu lateral */
 .sidebar,
 .nav-scrollable {
     background-color: #261424 !important;
