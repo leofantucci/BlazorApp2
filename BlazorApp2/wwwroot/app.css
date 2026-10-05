@@ -279,7 +279,8 @@ h1:focus {
 }
 
 body{
-    background: #401F3E;
+    /*background: #401F3E;*/
+    background: #0a53be;
     color: white;
 }
 /* Barra do topo (onde fica o texto Aplicativo) */
