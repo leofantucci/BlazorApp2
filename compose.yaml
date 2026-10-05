@@ -1,0 +1,19 @@
+﻿services:
+  blazorapp2:
+    image: blazorapp2
+    build:
+      context: .
+      dockerfile: BlazorApp2/Dockerfile
+
+  repositorio:
+    image: repositorio
+    build:
+      context: .
+      dockerfile: Repositorio/Dockerfile
+
+  techtoysdominio:
+    image: techtoysdominio
+    build:
+      context: .
+      dockerfile: TechToysDominio/Dockerfile
+

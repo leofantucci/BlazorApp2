@@ -1,0 +1,37 @@
+﻿@page "/embalagens"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+
+<PageTitle>Embalagens</PageTitle>
+
+<h1 class="faixaNinja">Embalagens</h1>
+
+<div class="sera">
+    <!-- Grid com os cards -->
+    <div class="container-personalizado-2">
+        <div class="card-personalizado-2">
+            <a href="embalagens/cadastrar"><img class="foto-2" src="Media/cadastrar.png" alt="Icone-Cadastrar"/></a>
+            <a class="texto-padrao-1" href="embalagens/cadastrar">Cadastrar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="embalagens/visualizar"><img class="foto-2" src="Media/visualizar.png" alt="Icone-Visualizar"/></a>
+            <a class="texto-padrao-1" href="embalagens/visualizar">Visualizar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="embalagens/editar"><img class="foto-2" src="Media/editar.png" alt="Icone-Editar"/></a>
+            <a class="texto-padrao-1" href="embalagens/editar">Editar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="embalagens/deletar"><img class="foto-2" src="Media/deletar.png" alt="Icone-Deletar"/></a>
+            <a class="texto-padrao-1" href="embalagens/deletar">Deletar</a>
+        </div>
+    </div>
+
+    <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+    <div class="area-botoes">
+        <a class="btn btn-secondary" href="/" alt="Voltar">Voltar</a>
+    </div>
+</div>

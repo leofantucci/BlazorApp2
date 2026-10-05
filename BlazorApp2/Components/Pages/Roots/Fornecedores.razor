@@ -1,0 +1,37 @@
+﻿@page "/fornecedores"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+
+<PageTitle>Fornecedores</PageTitle>
+
+<h1 class="faixaNinja">Fornecedores</h1>
+
+<div class="sera">
+    <!-- Grid com os cards -->
+    <div class="container-personalizado-2">
+        <div class="card-personalizado-2">
+            <a href="fornecedores/cadastrar"><img class="foto-2" src="Media/cadastrar.png" alt="Icone-Cadastrar"/></a>
+            <a class="texto-padrao-1" href="fornecedores/cadastrar">Cadastrar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="fornecedores/visualizar"><img class="foto-2" src="Media/visualizar.png" alt="Icone-Visualizar"/></a>
+            <a class="texto-padrao-1" href="fornecedores/visualizar">Visualizar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="fornecedores/editar"><img class="foto-2" src="Media/editar.png" alt="Icone-Editar"/></a>
+            <a class="texto-padrao-1" href="fornecedores/editar">Editar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="fornecedores/deletar"><img class="foto-2" src="Media/deletar.png" alt="Icone-Deletar"/></a>
+            <a class="texto-padrao-1" href="fornecedores/deletar">Deletar</a>
+        </div>
+    </div>
+
+    <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+    <div class="area-botoes">
+        <a class="btn btn-secondary" href="/" alt="Voltar">Voltar</a>
+    </div>
+</div>

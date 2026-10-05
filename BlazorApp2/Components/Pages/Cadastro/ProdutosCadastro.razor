@@ -1,0 +1,114 @@
+﻿@page "/produtos/cadastrar"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Produtos - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Produtos - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <p class="texto-padrao-1">Insira o NOME do produto</p><br/>
+        <input class="entrada" placeholder="Ex.: Pikachu" @bind="nome" /><br/>
+
+        <a class="texto-padrao-1">Insira o PESO de IMPRESSÃO do produto (g)</a><br/>
+        <input class="entrada" type="number" step="any" placeholder="Ex.: 67" @bind="peso" /><br/>
+
+        <a class="texto-padrao-1">Insira o TEMPO de IMPRESSÃO do produto (min)</a><br/>
+        <input class="entrada" type="number" step="any" placeholder="Ex.: 235" @bind="tempo" /><br/>
+        
+        <div class="dimensoes">
+            <div>
+                <a class="texto-padrao-1">Insira a LARGURA do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="Ex.: 135" @bind="largura"/><br/>
+            </div>
+            <div>
+                <a class="texto-padrao-1">Insira o COMPRIMENTO do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="Ex.: 175" @bind="comprimento"/><br/>
+            </div>
+            <div>
+                <a class="texto-padrao-1">Insira a ALTURA do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="Ex.: 200" @bind="altura"/><br/>
+            </div>
+        </div>
+
+        <div class="container-personalizado">
+            <a class="texto-padrao-1">Insira o ID da MATÉRIA-PRIMA do produto</a>
+            <a class="atalho_visualizar" href="/materias-primas/visualizar" target="_blank">Visualizar Matérias-Primas</a>
+        </div>
+        <input class="entrada" type="number" placeholder="Ex.: 10" @bind="idMateriaPrima" /><br/>
+        
+        <div class="container-personalizado">
+            <a class="texto-padrao-1">Insira o ID da IMPRESSORA do produto</a>
+            <a class="atalho_visualizar" href="/impressoras/visualizar" target="_blank">Visualizar Impressoras</a>
+        </div>
+        <input class="entrada" type="number" placeholder="Ex.: 10" @bind="idImpressora" /><br/>
+        
+        <a class="texto-padrao-1">Insira o VALOR de VENDA do produto (R$)</a><br/>
+        <input class="entrada" type="number" step="0.01" placeholder="Ex.: 99.99" @bind="valorVenda" /><br/>
+        
+        <a class="texto-padrao-1">Insira o ESTOQUE do produto</a><br/>
+        <input class="entrada" type="number" placeholder="Ex.: 5" @bind="estoque" /><br/>
+    </div>
+
+    <!-- Botão aciona o método Salvar ao invés de navegar via href -->
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <a class="btn btn-secondary" href="/produtos">Voltar</a>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    double tempo, largura, comprimento, peso, altura, valorVenda;
+    int estoque;    
+        
+    private string email = string.Empty;
+    private string telefone = string.Empty;
+    private string site = string.Empty;
+    int idMateriaPrima;
+    int idImpressora;
+
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(nome) || idImpressora == 0 || idMateriaPrima == 0)
+        {
+            mensagemErro = "Por favor, preencha o Nome, ID da Impressora e ID da Materia Prima.";
+            return;
+        }
+
+        try
+        {
+            MateriaPrima materiaPrima = RepositorioTechToys.ObterPorId<MateriaPrima>(idMateriaPrima);
+            Impressora impressora = RepositorioTechToys.ObterPorId<Impressora>(idImpressora); 
+            RepositorioTechToys.CadastrarProduto(nome, materiaPrima, impressora, valorVenda, peso, tempo, largura, comprimento, altura, estoque);
+
+            NavigationManager.NavigateTo("/produtos");
+        }
+        catch (Exception ex)
+        {
+            // Exibe o erro exato na tela e também no console do Visual Studio / Terminal
+            Console.WriteLine($"[ERRO CADASTRO]: {ex}");
+    
+            // Varre até achar a causa raiz real lançada pelo banco
+            Exception erroAtual = ex;
+            while (erroAtual.InnerException != null)
+            {
+                erroAtual = erroAtual.InnerException;
+            }
+    
+            mensagemErro = $"Detalhe do erro: {erroAtual.Message}";
+            StateHasChanged();
+        }
+    }
+}

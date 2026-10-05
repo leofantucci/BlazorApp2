@@ -1,0 +1,69 @@
+﻿@page "/visao-geral"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+
+<PageTitle>Visão-Geral</PageTitle>
+
+<h1 class="faixaNinja">Visão-Geral</h1>
+
+@if (!string.IsNullOrEmpty(mensagem))
+{
+    <div class="alert @(sucesso ? "alert-success" : "alert-danger") mt-3">
+        @mensagem
+    </div>
+}
+
+<div class="container-personalizado-2">
+    <div class="card-personalizado-2" style="cursor: pointer;" @onclick="CriarBanco">
+        <img class="foto-2" src="Media/cadastrar.png" alt="Icone-Cadastrar"/>
+        <span class="texto-padrao-1">Criar Banco</span>
+    </div>
+    
+    <div class="card-personalizado-2" style="cursor: pointer;" @onclick="LimparBanco">
+        <img class="foto-2" src="Media/deletar.png" alt="Icone-Deletar"/>
+        <span class="texto-padrao-1">Limpar Banco</span>
+    </div>
+</div>
+
+<!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+<div class="area-botoes">
+    <a class="btn btn-secondary" href="/">Voltar</a>
+</div>
+
+@code {
+    private string mensagem = string.Empty;
+    private bool sucesso = true;
+
+    private void CriarBanco()
+    {
+        try
+        {
+            RepositorioTechToys.CriarBanco();
+            sucesso = true;
+            mensagem = "Banco de dados e tabelas criados com sucesso!";
+        }
+        catch (Exception ex)
+        {
+            sucesso = false;
+            mensagem = $"Erro ao criar banco: {ex.Message}";
+        }
+    }
+
+    private void LimparBanco()
+    {
+        try
+        {
+            RepositorioTechToys.LimparBanco();
+            sucesso = true;
+            mensagem = "Todas as tabelas foram limpas com sucesso!";
+        }
+        catch (Exception ex)
+        {
+            sucesso = false;
+            mensagem = $"Erro ao limpar banco: {ex.Message}";
+        }
+    }
+}

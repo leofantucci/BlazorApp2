@@ -1,0 +1,82 @@
+﻿@page "/materias-primas/cadastrar"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Materias-Primas - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Materias-Primas - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-3">
+        <p class="texto-padrao-1">Insira o NOME da matéria-prima</p><br/>
+        <input class="entrada" placeholder="Ex.: Matéria-prima Principal" @bind="nome" /><br/>
+
+        <a class="texto-padrao-1">Insira o PESO de COMPRA da matéria-prima (g)</a><br/>
+        <input class="entrada" type="number" typeplaceholder="Ex.: 1000" @bind="peso_compra" /><br/>
+
+        <a class="texto-padrao-1">Insira o PREÇO de COMPRA da matéria-prima (R$)</a><br/>
+        <input class="entrada" type="number" step="0.01" placeholder="Ex.: 68.90" @bind="preco_compra" /><br/>
+        
+        <a class="texto-padrao-1">Insira o ID do FORNECEDOR da matéria-prima</a>
+        <a class="atalho_visualizar" href="/fornecedores/visualizar" target="_blank">Visualizar Fornecedores</a>
+        <input class="entrada" type="number" placeholder="Ex.: 10" @bind="idFornecedor" /><br/>
+        
+        <a class="texto-padrao-1">Insira o ESTOQUE da matéria-prima (g)</a>
+        <input class="entrada" type="number" placeholder="Ex.: 1000" @bind="estoque" /><br/>
+        <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+        <br/>
+    </div>
+
+    <!-- Botão aciona o método Salvar ao invés de navegar via href -->
+    
+    <a class="btn btn-secondary" href="/materias-primas">Voltar</a>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private int peso_compra = 1000;
+    private double preco_compra;
+    private int idFornecedor;
+    private int estoque = 1000;
+    
+    private string mensagemErro = string.Empty;
+
+    public Fornecedor BuscarFornecedorID(int idFornecedor)
+    {
+        return RepositorioTechToys.ObterPorId<Fornecedor>(idFornecedor);
+    }
+    
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(idFornecedor.ToString()))
+        {
+            mensagemErro = "Por favor, preencha o Nome e o ID Fornecedor.";
+            return;
+        }
+
+        try
+        {
+            // Chama a função já existente no repositório
+            Fornecedor fornecedor  = BuscarFornecedorID(idFornecedor); 
+            RepositorioTechToys.CadastrarMateriaPrima(nome, peso_compra, preco_compra, fornecedor, estoque);
+
+            // Redireciona para a lista ou tela inicial
+            NavigationManager.NavigateTo("/materias-primas");
+        }
+        catch (Exception ex)
+        {
+            // Pega a mensagem mais profunda (a causa raiz informada pelo PostgreSQL)
+            var erroReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            mensagemErro = $"Erro ao salvar: {erroReal}";
+        }
+    }
+}

@@ -1,0 +1,76 @@
+﻿@page "/materias-primas/visualizar"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Materias-Primas - Visualizar</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Materias-Primas - Visualizar</p></div>
+
+    @if (lista.Count > 0)
+    {
+        <table class="table table-striped table-bordered mt-3">
+            <thead class="table-dark">
+            <tr>
+                <th>+</th>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Preço(R$)/grama</th>
+                <th>Fornecedor - Nome</th>
+                <th>Estoque - Qtd. (g)</th>
+            </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in lista)
+                {
+                    <tr>
+                        <td><a href="/materias-primas/@item.Id/mais-detalhes"><img class="foto-3" src="Media/visualizar-dark.png" alt="Ver detalhes"></a></td>
+                        <td>@item.Id</td>
+                        <td>@item.Nome</td>
+                        <td>R$ @item.Calcular_Preco_Grama().ToString("F2")</td>
+                        <td>@item.Fornecedor.Nome</td>
+                        <td>@item.Estoque g</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <a class="btn btn-primary" href="/materias-primas/cadastrar">Nova Materia prima</a>
+            <a class="btn btn-secondary" href="/materias-primas">Voltar</a>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1">Nenhuma materia prima cadastrada no momento.</p>
+        <a class="btn btn-primary" href="/materias-primas/cadastrar">Cadastrar Agora</a>
+        <a class="btn btn-secondary" href="/materias-primas">Voltar</a>
+    }
+</div>
+
+@code {
+    public List<MateriaPrima> lista = new List<MateriaPrima>();
+
+    // Executado automaticamente assim que a página é carregada
+    protected override void OnInitialized()
+    {
+        CarregarDados();
+    }
+
+    private void CarregarDados()
+    {
+        try
+        {
+            // Usa a instância injetada via @inject
+            lista = RepositorioTechToys.ListarTodos<MateriaPrima>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar lista: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,71 @@
+﻿@page "/fornecedores/cadastrar"
+@rendermode InteractiveServer
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Fornecedores - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Fornecedores - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <p class="texto-padrao-1">Insira o NOME do fornecedor</p><br/>
+        <input class="entrada" placeholder="Ex.: Mercado Livre" @bind="nome" /><br/>
+
+        <article class="texto-padrao-1">Insira o EMAIL do fornecedor</article><br/>
+        <input class="entrada" placeholder="Ex.: email@xyz.com" @bind="email" /><br/>
+
+        <article class="texto-padrao-1">Insira o TELEFONE do fornecedor</article><br/>
+        <input class="entrada" placeholder="Ex.: +55 (11) 123456789" @bind="telefone" /><br/>
+        
+        <article class="texto-padrao-1">Insira o SITE do fornecedor</article><br/>
+        <input class="entrada" placeholder="Ex.: www.mercadolivre.com" @bind="site" /><br/>
+
+    </div>
+
+    <!-- Botão aciona o método Salvar ao invés de navegar via href -->
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <a class="btn btn-secondary" href="/fornecedores">Voltar</a>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private string email = string.Empty;
+    private string telefone = string.Empty;
+    private string site = string.Empty;
+
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            mensagemErro = "Por favor, preencha o Nome.";
+            return;
+        }
+
+        try
+        {
+            // Chama a função já existente no repositório
+            RepositorioTechToys.CadastrarFornecedor(nome, email, telefone, site);
+
+            // Redireciona para a lista ou tela inicial
+            NavigationManager.NavigateTo("/fornecedores");
+        }
+        catch (Exception ex)
+        {
+            // Pega a mensagem mais profunda (a causa raiz informada pelo PostgreSQL)
+            var erroReal = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            mensagemErro = $"Erro ao salvar: {erroReal}";
+        }
+    }
+}
