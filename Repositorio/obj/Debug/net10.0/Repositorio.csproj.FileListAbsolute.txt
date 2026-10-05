@@ -8,9 +8,9 @@
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.AssemblyInfoInputs.cache
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.AssemblyInfo.cs
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.csproj.CoreCompileInputs.cache
+/home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.sourcelink.json
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Reposito.F4C96B80.Up2Date
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.dll
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/refint/Repositorio.dll
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.pdb
 /home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/ref/Repositorio.dll
-/home/leof/RiderProjects/BlazorApp2/Repositorio/obj/Debug/net10.0/Repositorio.sourcelink.json

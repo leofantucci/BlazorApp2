@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "3fFacs3KqeU=",
+  "dgSpecHash": "P8NmzAf8b1Y=",
   "success": true,
   "projectFilePath": "/home/leof/RiderProjects/BlazorApp2/Repositorio/Repositorio.csproj",
   "expectedPackageFiles": [
@@ -19,7 +19,8 @@
     "/home/leof/.nuget/packages/microsoft.extensions.primitives/10.0.0/microsoft.extensions.primitives.10.0.0.nupkg.sha512",
     "/home/leof/.nuget/packages/npgsql/10.0.0/npgsql.10.0.0.nupkg.sha512",
     "/home/leof/.nuget/packages/npgsql.entityframeworkcore.postgresql/10.0.0/npgsql.entityframeworkcore.postgresql.10.0.0.nupkg.sha512",
-    "/home/leof/.nuget/packages/plantuml.net/1.4.80/plantuml.net.1.4.80.nupkg.sha512"
+    "/home/leof/.nuget/packages/plantuml.net/1.4.80/plantuml.net.1.4.80.nupkg.sha512",
+    "/home/leof/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.11/microsoft.aspnetcore.app.ref.10.0.11.nupkg.sha512"
   ],
   "logs": []
 }

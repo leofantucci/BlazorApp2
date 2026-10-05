@@ -1,49 +1,161 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
 }
-.corSecundaria{
+
+body {
+    background: #401F3E;
+    color: white;
+}
+
+.corSecundaria {
     background-color: #261424;
 }
 
 a, .btn-link {
     color: #006bb7;
+    text-decoration: none;
+}
+
+/* ========================================================
+   1. BARRA LATERAL (ALTURA TOTAL)
+   ======================================================== */
+.sidebar {
+    background-color: #261424 !important;
+    position: sticky !important;
+    top: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    align-self: flex-start;
+}
+
+.nav-scrollable {
+    background-color: #261424 !important;
+    height: calc(100vh - 90px) !important; /* Desconta a altura do cabeçalho */
+    overflow-y: auto;
+}
+
+/* ========================================================
+   2. ALINHAMENTO DO "TECH&TOYS" COM A FAIXA NINJA
+   ======================================================== */
+/* Ajusta o container superior do logo Tech&Toys no NavMenu */
+.sidebar .top-row,
+.sidebar .navbar,
+.sidebar .navbar-brand {
+    height: 90px !important;            /* Mesma altura da faixaNinja */
+    min-height: 90px !important;
+    max-height: 90px !important;
+    background-color: #401F3E !important; /* Mesma cor de fundo para emendar */
+    display: flex !important;
+    align-items: center !important;     /* Centraliza verticalmente o Tech&Toys */
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+    
+}
+
+/* O texto Tech&Toys em si */
+.sidebar a.navbar-brand,
+.top-row a.navbar-brand.navbar-texto-1 {
+    font-size: 2.2rem !important;
+    color: #ffffff !important;
+    line-height: normal !important;
+    font-weight: bolder !important;
+    margin: 0 !important;
+    padding-left: 1.5rem !important;
+}
+
+/* ========================================================
+   3. FAIXA NINJA NO TOPO
+   ======================================================== */
+.faixaNinja {
+    background-color: #261424 !important;
+    width: 100% !important;
+    height: 90px !important;            /* Mesma altura do Tech&Toys */
+    min-height: 90px !important;
+    max-height: 90px !important;
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;     /* Alinha no centro vertical */
+
+    color: white !important;
+    font-size: 34px !important;
+    font-weight: bolder !important;
+
+    margin: 0 !important;
+    margin-bottom: 30px !important;
+    padding: 0 !important;
+}
+
+/* Remove a barra padrão de cabeçalho da área principal (se existir) */
+main > .top-row {
+    display: none !important;
+}
+
+main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* ========================================================
+   4. DEMAIS CARDS E COMPONENTES
+   ======================================================== */
+.container-personalizado {
+    width: 95%;
+    max-width: 1400px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    margin: 0 auto;
+    padding-bottom: 40px;
 }
 
 .card-personalizado {
-    margin-top: 40px;
+    cursor: pointer; /* Para o usuário ver que é clicável */
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 306px;
-    height: 300px;
-    margin-bottom: 25px;
+    width: 30%;
+    min-width: 260px;
+    height: auto;
 
     display: flex;
     flex-direction: column;
-    align-items: center;    /* Centraliza os itens horizontalmente */
-    vertical-align: middle;
+    align-items: center;
+    justify-content: center;
 
-    border-radius: 50px;
-    padding-top: 25px;
+    border-radius: 40px;
+    padding: 25px 15px;
     font-weight: bold;
+    box-sizing: border-box;
 }
 
 .card-personalizado-2 {
-    margin-top: 40px;
+    cursor: pointer; /* Para o usuário ver que é clicável */
     color: #fff;
     background-color: #261424;
     border-color: #261424;
-    width: 250px;
-    height: 250px;
-    margin-bottom: 25px;
-    margin-right: 15px;
-    margin-left: 15px;
-
+    width: 25%;
+    height: auto;
     display: flex;
-
-    display: flex;
-    justify-content: center; /* Centraliza horizontalmente (na linha) */
-    align-items: center;     /* Centraliza verticalmente */
+    justify-content: center;
+    align-items: center;
     flex-direction: column;
     border-radius: 50px;
     padding-top: 25px;
@@ -51,39 +163,21 @@ a, .btn-link {
     font-size: 12px;
 }
 
-.sera{
+.sera {
     display: flex;
     flex-direction: column;
-    align-items: center;    /* Centraliza os itens horizontalmente */
+    align-items: center;
     vertical-align: middle;
 }
 
-.container-personalizado{
-    margin-top: -20px;
-    margin-left: -33px;
-    padding-left: 33px;
-    width: 104%;
-    height: 700px;
-
-    display: flex;
-    flex-wrap: wrap; /* Permite que os itens quebrem para a próxima linha */
-    gap: 16px;       /* Espaço entre colunas e linhas */
-}
 .container-personalizado-2 {
-    margin-top: -20px;
-    margin-left: -33px;
-    padding-left: 33px;
-    width: 104%;
-    height: auto; /* <-- Mude de 125px para auto para não travar a altura */
-    min-height: 125px;
-
+    width: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center; /* Centraliza os cards na horizontal */
+    justify-content: center;
     gap: 16px;
 }
 
-/* Nova classe para alinhar o botão ao final */
 .area-botoes {
     margin-top: 20px;
     margin-bottom: 40px;
@@ -92,147 +186,93 @@ a, .btn-link {
     width: 100%;
 }
 
-.centralizado{
+.centralizado {
     display: flex;
-    justify-content: center; /* Centraliza horizontalmente (na linha) */
-    align-items: center;     /* Centraliza verticalmente */
+    justify-content: center;
+    align-items: center;
     flex-direction: column;
 }
 
-.entrada{
+.entrada {
     display: block;
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    width: 320px;
+    width: 30%;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     font-size: 22px;
-    width: 450px;
-    height: 75px;
     margin-bottom: 25px;
 }
 
-.blueprint{
+.blueprint {
     background-color: #261424;
-
     display: flex;
     flex-direction: column;
-    align-items: center;    /* Centraliza os itens horizontalmente */
-    vertical-align: middle;
+    align-items: center;
     width: 44%;
-    height: 500px;
-    background-color: #261424;
     color: white;
     border-radius: 50px;
     margin-bottom: 25px;
 }
 
-.blueprint-1{
-    padding-top: 22px;
-
-}
-.blueprint-2{
-    padding-top: 10px;
-    padding-bottom: 5px;
-}
-.blueprint-3{
+.blueprint-1 { padding-top: 22px; }
+.blueprint-2 { padding-top: 10px; padding-bottom: 5px; }
+.blueprint-3 {
     margin-top: -33px;
     margin-bottom: 22px;
     width: 77%;
     height: 730px;
     padding-top: 22px;
-    padding-bottom: 0px;
 }
 
-
-.texto-padrao-1{
-    align-items: center;
+.texto-padrao-1 {
     text-align: center;
     color: #ffffff;
     font-family: 'Helvetica Neue', Charcoal, sans-serif;
-    font-size: 33px;
+    font-size: 24px;
+    margin-top: 10px;
 }
 
-.foto{
-    width: 200px;
-    height: 200px;
-    margin-bottom: 10px;
+.foto {
+    width: 70px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
 }
 
-.foto-2{
-    width: 75px;
-    height: 75px;
-    margin-bottom: 10px;
+.foto-2, .foto-3 {
+    width: 30%;
+    height: auto;
 }
 
-.foto-3{
-    height: 30px;
-    width: 30px;
-}
-
-td,th{
+td, th {
     text-align: center;
-    vertical-align-align: middle;
+    vertical-align: middle;
 }
 
 .btn-personalizado {
     background-color: #261424;
-
     color: #fff;
-    border-color: #ffffff;
+    border: 1px solid #ffffff;
     width: 200px;
     height: 75px;
     margin-bottom: 25px;
     text-align: center;
     font-size: 28px;
-    padding-top: 18px;
 }
 
-.btn-secondary{
+.btn-secondary {
     width: 175px;
-    height:50px;
-    padding-top: 15px;
+    height: 50px;
 }
 
-.btn-personalizado:hover{
+.btn-personalizado:hover {
     background-color: #ffffff;
     color: #261424;
 }
 
-.faixaNinja{
-    background-color: #261424;
-
-    margin-top: -20px;
-    margin-left: -33px;
-    padding-left: 33px;
-    width: 104%;
-    height: 125px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;    /* Centraliza os itens horizontalmente */
-    vertical-align: middle;
-
-    color: white;
-    padding-top: 20px;
-    font-size: 77px;
-    margin-bottom: 50px;
-    font-weight: bolder;
-}
-
-.top-row a.navbar-brand.navbar-texto-1 {
-    font-size: 2.5rem !important; /* ~40px - ajuste como preferir */
-    color: #ffffff !important;
-    line-height: normal;
-    font-weight: bolder;
-}
-
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.content {
-    padding-top: 1.1rem;
 }
 
 h1:focus {
@@ -274,23 +314,6 @@ h1:focus {
     text-align: start;
 }
 
-.atalho_visualizar{
+.atalho_visualizar {
     color: deeppink;
-}
-
-body{
-    background: #401F3E;
-    /*background: #0a53be;*/
-    color: white;
-}
-/* Barra do topo (onde fica o texto Aplicativo) */
-.top-row,
-.top-row.navbar {
-    background-color: #401F3E!important;
-}
-
-/* Fundo da barra de navegação/menu lateral */
-.sidebar,
-.nav-scrollable {
-    background-color: #261424 !important;
 }

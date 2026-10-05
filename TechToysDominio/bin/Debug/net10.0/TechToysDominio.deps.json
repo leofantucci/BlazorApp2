@@ -1,0 +1,41 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "TechToysDominio/1.0.0": {
+        "dependencies": {
+          "PlantUml.Net": "1.4.80"
+        },
+        "runtime": {
+          "TechToysDominio.dll": {}
+        }
+      },
+      "PlantUml.Net/1.4.80": {
+        "runtime": {
+          "lib/netcoreapp2.0/PlantUml.Net.dll": {
+            "assemblyVersion": "1.4.80.0",
+            "fileVersion": "1.4.80.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "TechToysDominio/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "PlantUml.Net/1.4.80": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qBJ92YA8+0TXO8frlpVb/rz6Ya9okWYx263i6x2ilbq6tJrHJaAg9EoLZaPUnk51VJrMBL4CEmGLNATPYynjnw==",
+      "path": "plantuml.net/1.4.80",
+      "hashPath": "plantuml.net.1.4.80.nupkg.sha512"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/bin/Debug/net10.0/TechToysDominio.deps.json
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/bin/Debug/net10.0/TechToysDominio.dll
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/bin/Debug/net10.0/TechToysDominio.pdb
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.csproj.AssemblyReference.cache
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.GeneratedMSBuildEditorConfig.editorconfig
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.AssemblyInfoInputs.cache
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.AssemblyInfo.cs
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.csproj.CoreCompileInputs.cache
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.sourcelink.json
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.dll
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/refint/TechToysDominio.dll
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/TechToysDominio.pdb
+/home/leof/RiderProjects/BlazorApp2/TechToysDominio/obj/Debug/net10.0/ref/TechToysDominio.dll
