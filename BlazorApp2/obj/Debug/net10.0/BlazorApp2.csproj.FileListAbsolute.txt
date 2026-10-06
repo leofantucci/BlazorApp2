@@ -95,7 +95,6 @@
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/BlazorApp2.pdb
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/BlazorApp2.genruntimeconfig.cache
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/ref/BlazorApp2.dll
-/home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/compressed/fcccs64pwj-{0}-qybj53gvtw-qybj53gvtw.gz
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/Humanizer.dll
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/Microsoft.Build.Framework.dll
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/Microsoft.CodeAnalysis.dll
@@ -189,3 +188,4 @@
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/tr/Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/bin/Debug/net10.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.MSBuild.resources.dll
+/home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/compressed/fcccs64pwj-{0}-tnfs6xl8tg-tnfs6xl8tg.gz

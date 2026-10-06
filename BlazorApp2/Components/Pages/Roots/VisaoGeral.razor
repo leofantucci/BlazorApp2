@@ -19,15 +19,59 @@
 }
 
 <div class="container-personalizado-2">
-    <div class="card-personalizado-2" style="cursor: pointer;" @onclick="CriarBanco">
+
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('C')">
+        <img class="foto-4" src="Media/cliente.png" alt="Icone-Clientes"/>
+        <span class="texto-padrao-1">Clientes</span>
+        <span class="texto-padrao-1">@NumerarClientes() cadastrado(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('E')">
+        <img class="foto-4" src="Media/embalagens.png" alt="Icone-Embalagens"/>
+        <span class="texto-padrao-1">Embalagens</span>
+        <span class="texto-padrao-1">@NumerarEmbalagens() cadastrada(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('F')">
+        <img class="foto-4" src="Media/fornecedor.png" alt="Icone-Fornecedores"/>
+        <span class="texto-padrao-1">Fornecedores</span>
+        <span class="texto-padrao-1">@NumerarFornecedores() cadastrado(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('I')">
+        <img class="foto-4" src="Media/impressora.png" alt="Icone-Impressoras"/>
+        <span class="texto-padrao-1">Impressoras</span>
+        <span class="texto-padrao-1">@NumerarImpressoras() cadastrada(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('M')">
+        <img class="foto-4" src="Media/materiaprima.png" alt="Icone-Materia-Prima"/>
+        <span class="texto-padrao-1">Materias-Primas</span>
+        <span class="texto-padrao-1">@NumerarMateriasPrimas() cadastrada(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('P')">
+        <img class="foto-4" src="Media/produtos2.png" alt="Icone-Produto"/>
+        <span class="texto-padrao-1">Produtos</span>
+        <span class="texto-padrao-1">@NumerarProdutos() cadastrado(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="() => funcao('V')">
+        <img class="foto-4" src="Media/vendas.png" alt="Icone-Vendas"/>
+        <span class="texto-padrao-1">Vendas</span>
+        <span class="texto-padrao-1">@NumerarVendas() cadastrada(s)!</span>
+    </div>
+    
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="CriarBanco">
         <img class="foto-2" src="Media/cadastrar.png" alt="Icone-Cadastrar"/>
         <span class="texto-padrao-1">Criar Banco</span>
     </div>
     
-    <div class="card-personalizado-2" style="cursor: pointer;" @onclick="LimparBanco">
+    <div class="card-personalizado-3" style="cursor: pointer;" @onclick="LimparBanco">
         <img class="foto-2" src="Media/deletar.png" alt="Icone-Deletar"/>
         <span class="texto-padrao-1">Limpar Banco</span>
     </div>
+
 </div>
 
 <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
@@ -38,20 +82,97 @@
 @code {
     private string mensagem = string.Empty;
     private bool sucesso = true;
+    
+    private int numeroImpressoras = 0;
+    List<Impressora> impressoras = new List<Impressora>();
+
+    public int NumerarImpressoras()
+    {
+        impressoras = RepositorioTechToys.ListarTodos<Impressora>();
+        numeroImpressoras = impressoras.Count();
+        return numeroImpressoras;
+    }
+
+    public int NumerarClientes()
+    {
+        List<Cliente> clientes = RepositorioTechToys.ListarTodos<Cliente>();
+        return clientes.Count();
+    }
+
+    public int NumerarEmbalagens()
+    {
+        List<Embalagem> embalagens = RepositorioTechToys.ListarTodos<Embalagem>();
+        return embalagens.Count();
+    }
+
+    public int NumerarFornecedores()
+    {
+        List<Fornecedor> fornecedores = RepositorioTechToys.ListarTodos<Fornecedor>();
+        return fornecedores.Count();
+    }
+
+    public int NumerarMateriasPrimas()
+    {
+        List<MateriaPrima> materiasPrimas = RepositorioTechToys.ListarTodos<MateriaPrima>();
+        return materiasPrimas.Count();
+    }
+
+    public int NumerarProdutos()
+    {
+        var produtos = RepositorioTechToys.ListarTodos<TechToysDominio.Produto>();
+        return produtos.Count();
+    }
+
+    public int NumerarVendas()
+    {
+        List<Venda> vendas = RepositorioTechToys.ListarTodos<Venda>();
+        return vendas.Count();
+    }
 
     private void CriarBanco()
     {
         try
         {
             RepositorioTechToys.CriarBanco();
+            
             sucesso = true;
             mensagem = "Banco de dados e tabelas criados com sucesso!";
+
             RepositorioTechToys.CadastrarImpressora("nenhuma", "", 0);
-            RepositorioTechToys.CadastrarFornecedor("nenhum", "","", "");
-            RepositorioTechToys.CadastrarCliente("nenhum", "","", "");
-            RepositorioTechToys.CadastrarMateriaPrima("nenhuma", 0, 0, RepositorioTechToys.ObterPorId<Fornecedor>(1), 0);
-            RepositorioTechToys.CadastrarProduto("nenhum", RepositorioTechToys.ObterPorId<MateriaPrima>(1), RepositorioTechToys.ObterPorId<Impressora>(1), 0, 0, 0, 0, 0,0 ,0);
-            RepositorioTechToys.CadastrarEmbalagem("nenhuma", "", 0, 0, 0, 0, RepositorioTechToys.ObterPorId<Fornecedor>(1), 0);
+            RepositorioTechToys.CadastrarFornecedor("nenhum", "", "", "");
+            RepositorioTechToys.CadastrarCliente("nenhum", "", "", "");
+
+            RepositorioTechToys.CadastrarMateriaPrima(
+                "nenhuma",
+                0,
+                0,
+                RepositorioTechToys.ObterPorId<Fornecedor>(1),
+                0
+            );
+
+            RepositorioTechToys.CadastrarProduto(
+                "nenhum",
+                RepositorioTechToys.ObterPorId<MateriaPrima>(1),
+                RepositorioTechToys.ObterPorId<Impressora>(1),
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+            );
+
+            RepositorioTechToys.CadastrarEmbalagem(
+                "nenhuma",
+                "",
+                0,
+                0,
+                0,
+                0,
+                RepositorioTechToys.ObterPorId<Fornecedor>(1),
+                0
+            );
         }
         catch (Exception ex)
         {
@@ -62,7 +183,44 @@
 
     private void LimparBanco()
     {
-        Navigation.NavigateTo("visao-geral/limpar-banco");
-        
+        Navigation.NavigateTo("visao-geral/limpar-banco/");
+    }
+
+    private void funcao(char c)
+    {
+        if (c == 'C')
+        {
+            Navigation.NavigateTo("clientes/visualizar/");
+        }
+
+        if (c == 'E')
+        {
+            Navigation.NavigateTo("embalagens/visualizar/");
+        }
+
+        if (c == 'F')
+        {
+            Navigation.NavigateTo("fornecedores/visualizar/");
+        }
+
+        if (c == 'I')
+        {
+            Navigation.NavigateTo("impressoras/visualizar/");
+        }
+
+        if (c == 'M')
+        {
+            Navigation.NavigateTo("materias-primas/visualizar/");
+        }
+
+        if (c == 'P')
+        {
+            Navigation.NavigateTo("produtos/visualizar/");
+        }
+
+        if (c == 'V')
+        {
+            Navigation.NavigateTo("vendas/visualizar/");
+        }
     }
 }

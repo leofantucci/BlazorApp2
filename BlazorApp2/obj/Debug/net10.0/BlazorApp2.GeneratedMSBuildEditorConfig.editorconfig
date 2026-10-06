@@ -90,8 +90,8 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Sb290cy9NYXRlcmlhc1ByaW1hcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Roots/Produto.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Sb290cy9Qcm9kdXRvLnJhem9y
+[/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Roots/Produtos.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Sb290cy9Qcm9kdXRvcy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Roots/Vendas.razor]

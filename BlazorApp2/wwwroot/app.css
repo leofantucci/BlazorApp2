@@ -155,6 +155,10 @@ input[type="checkbox"].navbar-toggler {
         width: 15%;
     }
 
+    .card-personalizado-3 {
+        width: 20%;
+    }
+
     .blueprint {
         width: 44%;
     }
@@ -239,7 +243,7 @@ main {
     box-sizing: border-box;
 }
 
-.card-personalizado-2 {
+.card-personalizado-2, .card-personalizado-3 {
     cursor: pointer;
     color: #fff;
     background-color: #261424;
@@ -254,6 +258,7 @@ main {
     font-weight: bold;
     font-size: 12px;
     padding-bottom: 2%;
+    
 }
 
 .sera {
@@ -331,6 +336,22 @@ main {
     margin-left: auto;
     margin-right: auto;
     width: 30%;
+    height: auto;
+}
+
+.foto-4 {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 25%;
+    height: auto;
+}
+
+.foto-5 {
+    display: block;
+    width: 15%;
+    margin-right: 4%;
+    margin-left: -2%;
     height: auto;
 }
 
