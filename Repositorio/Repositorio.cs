@@ -42,9 +42,8 @@ namespace Repositorio
                 RESTART IDENTITY CASCADE;");
         }
 
-        #region Funções Globais (CRUD Genérico para Qualquer Tabela)
+        #region Funções Globais (CRUD Genérico)
 
-        // READ: Obter registro por ID
         public T ObterPorId<T>(int id) where T : class
         {
             using var db = _contextFactory.CreateDbContext();
@@ -90,7 +89,6 @@ namespace Repositorio
             return db.Set<T>().Find(id);
         }
 
-        // READ: Listar todos com AsNoTracking() para evitar dados defasados em cache
         public List<T> ListarTodos<T>() where T : class
         {
             using var db = _contextFactory.CreateDbContext();
@@ -133,7 +131,6 @@ namespace Repositorio
             return db.Set<T>().AsNoTracking().ToList();
         }
 
-        // UPDATE: Atualiza qualquer entidade alterada
         public void Atualizar<T>(T entidade) where T : class
         {
             using var db = _contextFactory.CreateDbContext();
@@ -141,7 +138,6 @@ namespace Repositorio
             db.SaveChanges();
         }
 
-        // DELETE: Deleta pelo ID em qualquer tabela
         public bool DeletarPorId<T>(int id) where T : class
         {
             using var db = _contextFactory.CreateDbContext();
@@ -204,16 +200,23 @@ namespace Repositorio
         public MateriaPrima CadastrarMateriaPrima(string nome, int pesoCompra, double precoCompra, Fornecedor fornecedor, int estoque)
         {
             using var db = _contextFactory.CreateDbContext();
+
+            Fornecedor fornRef = null;
             if (fornecedor != null && fornecedor.Id > 0)
-                db.Attach(fornecedor);
+            {
+                // Conecta via stub de ID para não tentar reinserir o fornecedor
+                fornRef = new Fornecedor { Id = fornecedor.Id };
+                db.Attach(fornRef);
+            }
 
             var mat = new MateriaPrima(pesoCompra)
             {
                 Nome = nome,
                 Preco_compra = precoCompra,
-                Fornecedor = fornecedor,
+                Fornecedor = fornRef,
                 Estoque = estoque
             };
+
             db.MateriaPrima.Add(mat);
             db.SaveChanges();
             return mat;
@@ -222,8 +225,13 @@ namespace Repositorio
         public Embalagem CadastrarEmbalagem(string nome, string tipo, double largura, double comprimento, double altura, double preco, Fornecedor fornecedor = null, int estoque = 0)
         {
             using var db = _contextFactory.CreateDbContext();
+
+            Fornecedor fornRef = null;
             if (fornecedor != null && fornecedor.Id > 0)
-                db.Attach(fornecedor);
+            {
+                fornRef = new Fornecedor { Id = fornecedor.Id };
+                db.Attach(fornRef);
+            }
 
             var emb = new Embalagem
             {
@@ -234,8 +242,9 @@ namespace Repositorio
                 altura = altura,
                 Preco = preco,
                 Estoque = estoque,
-                Fornecedor = fornecedor
+                Fornecedor = fornRef
             };
+
             db.Embalagem.Add(emb);
             db.SaveChanges();
             return emb;
@@ -244,14 +253,28 @@ namespace Repositorio
         public Produto CadastrarProduto(string nome, MateriaPrima mat, Impressora imp, double valorVenda, double pesoImp, double tempoImp, double largura, double comp, double altura, int estoque)
         {
             using var db = _contextFactory.CreateDbContext();
-            if (mat != null && mat.Id > 0) db.Attach(mat);
-            if (imp != null && imp.Id > 0) db.Attach(imp);
+
+            // Usa stubs limpos com apenas o ID. Isso impede que o EF Core tente rastrear
+            // ou reinserir dependências aninhadas (como mat.Fornecedor).
+            MateriaPrima matRef = null;
+            if (mat != null && mat.Id > 0)
+            {
+                matRef = new MateriaPrima { Id = mat.Id };
+                db.Attach(matRef);
+            }
+
+            Impressora impRef = null;
+            if (imp != null && imp.Id > 0)
+            {
+                impRef = new Impressora { Id = imp.Id };
+                db.Attach(impRef);
+            }
 
             var prod = new Produto
             {
                 Nome = nome,
-                Materia_Prima = mat,
-                Impressora = imp,
+                Materia_Prima = matRef,
+                Impressora = impRef,
                 Valor_Venda = valorVenda,
                 Peso_Impressao = pesoImp,
                 Tempo_Impressao = tempoImp,
@@ -261,24 +284,44 @@ namespace Repositorio
                 Estoque = estoque,
                 Ativo = true
             };
+
             db.Produto.Add(prod);
             db.SaveChanges();
             return prod;
         }
+        
 
         public Venda CadastrarVenda(Cliente cliente, Produto produto, int quantidade, Embalagem embalagem, int quantidadeEmbalagem, DateTime dataHora)
         {
             using var db = _contextFactory.CreateDbContext();
-            if (cliente != null && cliente.Id > 0) db.Attach(cliente);
-            if (produto != null && produto.Id > 0) db.Attach(produto);
-            if (embalagem != null && embalagem.Id > 0) db.Attach(embalagem);
+
+            Cliente clienteRef = null;
+            if (cliente != null && cliente.Id > 0)
+            {
+                clienteRef = new Cliente { Id = cliente.Id };
+                db.Attach(clienteRef);
+            }
+
+            Produto prodRef = null;
+            if (produto != null && produto.Id > 0)
+            {
+                prodRef = new Produto { Id = produto.Id };
+                db.Attach(prodRef);
+            }
+
+            Embalagem embRef = null;
+            if (embalagem != null && embalagem.Id > 0)
+            {
+                embRef = new Embalagem { Id = embalagem.Id };
+                db.Attach(embRef);
+            }
 
             var venda = new Venda
             {
-                Cliente = cliente,
-                Produto = produto,
+                Cliente = clienteRef,
+                Produto = prodRef,
                 Quantidade = quantidade,
-                Embalagem = embalagem,
+                Embalagem = embRef,
                 Quantidade_Embalagem = quantidadeEmbalagem,
                 Data_Hora = dataHora
             };

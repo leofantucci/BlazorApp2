@@ -60,7 +60,6 @@
         <input class="entrada" type="number" placeholder="Ex.: 5" @bind="estoque" /><br/>
     </div>
 
-    <!-- Botão aciona o método Salvar ao invés de navegar via href -->
     <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
     <br/>
     <a class="btn btn-secondary" href="/produtos">Voltar</a>
@@ -68,47 +67,64 @@
 
 @code {
     private string nome = string.Empty;
-    double tempo, largura, comprimento, peso, altura, valorVenda;
-    int estoque;    
+    private double tempo, largura, comprimento, peso, altura, valorVenda;
+    private int estoque;    
         
-    private string email = string.Empty;
-    private string telefone = string.Empty;
-    private string site = string.Empty;
-    int idMateriaPrima;
-    int idImpressora;
+    private int idMateriaPrima;
+    private int idImpressora;
 
     private string mensagemErro = string.Empty;
 
     private void Salvar()
     {
-        if (string.IsNullOrWhiteSpace(nome) || idImpressora == 0 || idMateriaPrima == 0)
+        mensagemErro = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(nome) || idImpressora <= 0 || idMateriaPrima <= 0)
         {
-            mensagemErro = "Por favor, preencha o Nome, ID da Impressora e ID da Materia Prima.";
+            mensagemErro = "Por favor, preencha o Nome, ID da Impressora e ID da Matéria-Prima.";
             return;
         }
 
         try
         {
-            MateriaPrima materiaPrima = RepositorioTechToys.ObterPorId<MateriaPrima>(idMateriaPrima);
-            Impressora impressora = RepositorioTechToys.ObterPorId<Impressora>(idImpressora); 
-            RepositorioTechToys.CadastrarProduto(nome, materiaPrima, impressora, valorVenda, peso, tempo, largura, comprimento, altura, estoque);
+            var materiaPrima = RepositorioTechToys.ObterPorId<MateriaPrima>(idMateriaPrima);
+            if (materiaPrima == null)
+            {
+                mensagemErro = $"Matéria-prima com ID {idMateriaPrima} não foi encontrada.";
+                return;
+            }
+
+            var impressora = RepositorioTechToys.ObterPorId<Impressora>(idImpressora);
+            if (impressora == null)
+            {
+                mensagemErro = $"Impressora com ID {idImpressora} não foi encontrada.";
+                return;
+            }
+
+            RepositorioTechToys.CadastrarProduto(
+                nome, 
+                materiaPrima, 
+                impressora, 
+                valorVenda, 
+                peso, 
+                tempo, 
+                largura, 
+                comprimento, 
+                altura, 
+                estoque
+            );
 
             NavigationManager.NavigateTo("/produtos");
         }
         catch (Exception ex)
         {
-            // Exibe o erro exato na tela e também no console do Visual Studio / Terminal
-            Console.WriteLine($"[ERRO CADASTRO]: {ex}");
-    
-            // Varre até achar a causa raiz real lançada pelo banco
             Exception erroAtual = ex;
             while (erroAtual.InnerException != null)
             {
                 erroAtual = erroAtual.InnerException;
             }
-    
-            mensagemErro = $"Detalhe do erro: {erroAtual.Message}";
-            StateHasChanged();
+
+            mensagemErro = $"Erro ao salvar: {erroAtual.Message}";
         }
     }
 }

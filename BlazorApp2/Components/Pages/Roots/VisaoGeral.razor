@@ -4,6 +4,8 @@
 @using TechToysDominio
 @using Repositorio
 @inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager Navigation
+
 
 <PageTitle>Visão-Geral</PageTitle>
 
@@ -44,6 +46,12 @@
             RepositorioTechToys.CriarBanco();
             sucesso = true;
             mensagem = "Banco de dados e tabelas criados com sucesso!";
+            RepositorioTechToys.CadastrarImpressora("nenhuma", "", 0);
+            RepositorioTechToys.CadastrarFornecedor("nenhum", "","", "");
+            RepositorioTechToys.CadastrarCliente("nenhum", "","", "");
+            RepositorioTechToys.CadastrarMateriaPrima("nenhuma", 0, 0, RepositorioTechToys.ObterPorId<Fornecedor>(1), 0);
+            RepositorioTechToys.CadastrarProduto("nenhum", RepositorioTechToys.ObterPorId<MateriaPrima>(1), RepositorioTechToys.ObterPorId<Impressora>(1), 0, 0, 0, 0, 0,0 ,0);
+            RepositorioTechToys.CadastrarEmbalagem("nenhuma", "", 0, 0, 0, 0, RepositorioTechToys.ObterPorId<Fornecedor>(1), 0);
         }
         catch (Exception ex)
         {
@@ -54,16 +62,7 @@
 
     private void LimparBanco()
     {
-        try
-        {
-            RepositorioTechToys.LimparBanco();
-            sucesso = true;
-            mensagem = "Todas as tabelas foram limpas com sucesso!";
-        }
-        catch (Exception ex)
-        {
-            sucesso = false;
-            mensagem = $"Erro ao limpar banco: {ex.Message}";
-        }
+        Navigation.NavigateTo("visao-geral/limpar-banco");
+        
     }
 }

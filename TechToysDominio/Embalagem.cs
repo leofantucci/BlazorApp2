@@ -26,5 +26,10 @@ namespace TechToysDominio
         {
             Estoque = 0;
         }
+
+        public double Calcular_Valor_Estoque()
+        {
+            return Convert.ToDouble(Estoque)* Preco;
+        }
     }
 }

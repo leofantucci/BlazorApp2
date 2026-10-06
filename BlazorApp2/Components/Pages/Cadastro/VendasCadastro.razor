@@ -1,0 +1,129 @@
+﻿@page "/vendas/cadastrar"
+@rendermode InteractiveServer
+
+@using System.Runtime.InteropServices.JavaScript
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Vendas - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Vendas - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <div class="container-personalizado">
+            <a class="texto-padrao-1">Insira o ID do CLIENTE da venda</a>
+            <a class="atalho_visualizar" href="/clientes/visualizar" target="_blank">Visualizar Clientes</a>
+        </div>
+        <input class="entrada" type="number" placeholder="Ex.: 10" @bind="idCliente" /><br/>
+        
+        <div class="container-personalizado">
+            <a class="texto-padrao-1">Insira o ID do PRODUTO da venda</a>
+            <a class="atalho_visualizar" href="/produtos/visualizar" target="_blank">Visualizar Produtos</a>
+        </div>
+        <input class="entrada" type="number" placeholder="Ex.: 3" @bind="idProduto" /><br/>
+        
+        <a class="texto-padrao-1">Insira a QUANTIDADE de PRODUTOS da venda</a>
+        <input class="entrada" type="number" placeholder="Ex.: 3" @bind="quantidade" /><br/>
+        
+        <div class="container-personalizado">
+            <a class="texto-padrao-1">Insira o ID da EMBALAGEM da venda</a>
+            <a class="atalho_visualizar" href="/embalagens/visualizar" target="_blank">Visualizar Embalagens</a>
+        </div>
+        <input class="entrada" type="number" placeholder="Ex.: 8" @bind="idEmbalagem" /><br/>
+        
+        <a class="texto-padrao-1">Insira a QUANTIDADE de EMBALAGENS da venda</a><br/>
+        <input class="entrada" type="number" min="1" placeholder="Ex.: 1" @bind="quantidadeEmbalagem" /><br/>
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <a class="btn btn-secondary" href="/vendas">Voltar</a>
+</div>
+
+@code {
+    // Campos do formulário
+    private string nome = string.Empty;
+    private int idCliente;
+    private int idProduto;
+    private int quantidade = 1;
+
+    // Campos opcionais de embalagem
+    private int idEmbalagem = 1;
+    private int quantidadeEmbalagem = 1;
+
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        mensagemErro = string.Empty;
+
+        // Validação dos campos obrigatórios
+        // Validação dos campos obrigatórios
+        if (idCliente <= 0 || idProduto <= 0 || quantidade <= 0)
+        {
+            mensagemErro = "Por favor, preencha o ID do Cliente, ID do Produto e a Quantidade.";
+            return;
+        }
+        // Validação da embalagem se o usuário marcou a opção
+        if ( (idEmbalagem <= 0 || quantidadeEmbalagem <= 0))
+        {
+            mensagemErro = "Informe um ID de Embalagem válido e uma quantidade maior que zero.";
+            return;
+        }
+
+        try
+        {
+            var cliente = RepositorioTechToys.ObterPorId<Cliente>(idCliente);
+            if (cliente == null)
+            {
+                mensagemErro = $"Cliente com ID {idCliente} não foi encontrado.";
+                return;
+            }
+
+            var produto = RepositorioTechToys.ObterPorId<Produto>(idProduto);
+            if (produto == null)
+            {
+                mensagemErro = $"Produto com ID {idProduto} não foi encontrado.";
+                return;
+            }
+
+            var embalagem = RepositorioTechToys.ObterPorId<Embalagem>(idEmbalagem);
+            if (embalagem == null)
+            {
+                embalagem = RepositorioTechToys.ObterPorId<Embalagem>(1);
+            }
+            
+            // Exemplo de criação do objeto de venda
+            var novaVenda = new Venda
+            {
+                Cliente = cliente,
+                Produto = produto,
+                Quantidade = quantidade,
+                Embalagem =  embalagem,
+                Quantidade_Embalagem = quantidadeEmbalagem
+            };
+
+            RepositorioTechToys.CadastrarVenda(cliente, produto, quantidade, embalagem, quantidadeEmbalagem, DateTime.UtcNow);
+
+            NavigationManager.NavigateTo("/vendas");
+        }
+        catch (Exception ex)
+        {
+            Exception erroAtual = ex;
+            while (erroAtual.InnerException != null)
+            {
+                erroAtual = erroAtual.InnerException;
+            }
+
+            mensagemErro = $"Erro ao salvar: {erroAtual.Message}";
+        }
+    }
+}
