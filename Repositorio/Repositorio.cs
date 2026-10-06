@@ -28,7 +28,7 @@ namespace Repositorio
             using var db = _contextFactory.CreateDbContext();
             db.Database.ExecuteSqlRaw(@"
                 TRUNCATE TABLE 
-                    ""Venda"", ""Produto"", ""Embalagem"", ""MateriaPrima"", ""Cliente"", ""Impressora"", ""Fornecedor"" 
+                    ""Venda"", ""Produto"", ""Embalagem"", ""MateriaPrima"", ""Cliente"", ""Impressora"", ""Fornecedor"", ""Usuario""
                 RESTART IDENTITY CASCADE;");
         }
 
@@ -335,7 +335,31 @@ namespace Repositorio
             db.SaveChanges();
             return venda;
         }
+        // Método para validar e retornar o usuário
+        public Usuario? ValidarUsuario(string login, string senha)
+        {
+            // Se usar hashing (recomendado), verifique o hash aqui.
+            // Comparação direta conforme modelo padrão de tabela:
+            return ListarTodos<Usuario>()
+                .FirstOrDefault(u => u.Login.Equals(login, StringComparison.OrdinalIgnoreCase) 
+                                     && u.Senha == senha);
+        }
 
+        public Usuario CadastrarUsuario(string login, string senha, string role)
+        {
+            using var db = _contextFactory.CreateDbContext();
+            
+            var novo = new Usuario
+            {
+                Login = login,
+                Senha = senha,
+                Role = role
+            };
+            
+            db.Usuario.Add(novo);
+            db.SaveChanges();
+            return novo;
+        }
         #endregion
     }
 }

@@ -46,6 +46,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYWRhc3Ryby9Gb3JuZWNlZG9yZXNDYWRhc3Ryby5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Cadastro/FuncionariosCadastro.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYWRhc3Ryby9GdW5jaW9uYXJpb3NDYWRhc3Ryby5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Cadastro/ImpressorasCadastro.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9DYWRhc3Ryby9JbXByZXNzb3Jhc0NhZGFzdHJvLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -68,6 +72,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Home.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Ib21lLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Login.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9QYWdlcy9Mb2dpbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [/home/leof/RiderProjects/BlazorApp2/BlazorApp2/Components/Pages/Roots/Clientes.razor]

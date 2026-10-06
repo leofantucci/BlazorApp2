@@ -16,6 +16,7 @@ namespace Repositorio
         public DbSet<Embalagem> Embalagem { get; set; }
         public DbSet<Produto> Produto { get; set; }
         public DbSet<Venda> Venda { get; set; }
+        public DbSet<Usuario> Usuario { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

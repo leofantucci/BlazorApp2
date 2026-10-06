@@ -1,0 +1,82 @@
+﻿@page "/funcionarios/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "gerente")]
+
+@using System.Security.Cryptography
+@using System.Text
+@using Microsoft.AspNetCore.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+
+<PageTitle>Funcionários - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Funcionários - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <p class="texto-padrao-1">Insira o LOGIN do funcionário</p><br/>
+        <input class="entrada" placeholder="func01" @bind="login" /><br/>
+        
+        <p class="texto-padrao-1">Insira a SENHA do funcionário</p><br/>
+        <input class="entrada" type="password" placeholder="Digite a senha..." @bind="senha" /><br/>
+    </div>
+
+    <!-- Botão aciona o método Salvar -->
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <a class="btn btn-secondary" href="/visao-geral">Voltar</a>
+</div>
+
+@code {
+    private string login = string.Empty;
+    private string senha = string.Empty;
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(senha))
+        {
+            mensagemErro = "Por favor, preencha o LOGIN e a SENHA do funcionário.";
+            return;
+        }
+
+        try
+        {
+            // Se já estiver usando texto puro no seu ValidarUsuario, passe a 'senha' direto.
+            // Se usar hash SHA256, use o método abaixo:
+            string senhaTratada = GerarHashSenha(senha);
+
+            RepositorioTechToys.CadastrarUsuario(login.Trim(), senhaTratada, "funcionario");
+
+            NavigationManager.NavigateTo("/visao-geral");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERRO CADASTRO]: {ex}");
+    
+            Exception erroAtual = ex;
+            while (erroAtual.InnerException != null)
+            {
+                erroAtual = erroAtual.InnerException;
+            }
+    
+            mensagemErro = $"Detalhe do erro: {erroAtual.Message}";
+            StateHasChanged();
+        }
+    }
+
+    // Exemplo de função utilitária caso queira salvar a senha criptografada via SHA256:
+    private string GerarHashSenha(string senhaTextoPuro)
+    {
+        using var sha256 = SHA256.Create();
+        var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(senhaTextoPuro));
+        return Convert.ToBase64String(bytes);
+    }
+}
