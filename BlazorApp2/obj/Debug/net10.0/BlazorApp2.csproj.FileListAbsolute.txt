@@ -95,4 +95,4 @@
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/BlazorApp2.pdb
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/BlazorApp2.genruntimeconfig.cache
 /home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/ref/BlazorApp2.dll
-/home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/compressed/fcccs64pwj-{0}-xd13j8eo0v-xd13j8eo0v.gz
+/home/leof/RiderProjects/BlazorApp2/BlazorApp2/obj/Debug/net10.0/compressed/fcccs64pwj-{0}-lc1vb161zj-lc1vb161zj.gz
