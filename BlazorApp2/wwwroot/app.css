@@ -353,9 +353,14 @@ td, th {
 .btn-secondary {
     width: 175px;
     height: 50px;
+    border-color: #ffffff;
+    background-color: #261424;
+    color: white;
+    font-weight: bold;
 }
 
-.btn-personalizado:hover {
+.btn-secondary:hover {
+    border-color: #261424;
     background-color: #ffffff;
     color: #261424;
 }
