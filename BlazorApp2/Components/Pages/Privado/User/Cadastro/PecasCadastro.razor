@@ -1,0 +1,217 @@
+﻿@page "/pecas/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+@using TechToysDominio
+@using Repositorio
+@using Microsoft.EntityFrameworkCore
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+<PageTitle>Peças - Cadastro</PageTitle>
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Peças - Cadastro</p></div>
+    @if (!string.IsNullOrWhiteSpace(mensagemErro))
+    {
+        <div class="alert alert-danger form-alert" role="alert">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2 formulario-card">
+        <div class="formulario-intro">
+            <h2>Informações da peça</h2>
+            <p>Cadastre as características da peça e distribua o peso entre os filamentos utilizados.</p>
+        </div>
+
+        <div class="formulario-secao">
+            <h3>Identificação</h3>
+            <div class="form-grid">
+                <div class="form-field form-field-full">
+                    <label for="nome-peca">Nome da peça</label>
+                    <input id="nome-peca" class="entrada form-control" type="text" maxlength="120"
+                           autocomplete="off" placeholder="Ex.: Suporte de parede" @bind="nome" />
+                </div>
+                <div class="form-field">
+                    <label for="peso-total">Peso total da impressão (g)</label>
+                    <input id="peso-total" class="entrada form-control" type="number" min="0.001" max="100000"
+                           step="0.001" inputmode="decimal" placeholder="Ex.: 25,500" @bind="peso" />
+                </div>
+                <div class="form-field">
+                    <label for="tempo-impressao">Tempo de impressão (min)</label>
+                    <input id="tempo-impressao" class="entrada form-control" type="number" min="0.001" max="1000000"
+                           step="0.1" inputmode="decimal" placeholder="Ex.: 120" @bind="tempo" />
+                </div>
+            </div>
+        </div>
+
+        <div class="formulario-secao">
+            <div class="form-section-heading">
+                <div>
+                    <h3>Filamentos e cores</h3>
+                    <p>Adicione uma linha para cada matéria-prima usada na impressão.</p>
+                </div>
+                <span class="form-count">@materiasSelecionadas.Count material(is)</span>
+            </div>
+
+            @foreach (var linha in materiasSelecionadas)
+            {
+                <div class="materia-linha" @key="linha">
+                    <div class="form-field materia-select">
+                        <label>Matéria-prima / cor</label>
+                        <select class="entrada form-control" @bind="linha.MateriaPrimaId">
+                            <option value="0">Selecione uma matéria-prima...</option>
+                            @foreach (var m in materias)
+                            {
+                                <option value="@m.Id">@m.Nome (estoque: @(RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(m.Id)) g)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-field materia-peso">
+                        <label>Peso utilizado (g)</label>
+                        <input class="entrada form-control peso-filamento" type="number" min="0.001" max="100000"
+                               step="0.001" inputmode="decimal" placeholder="0,000" @bind="linha.Peso" />
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-remover-materia"
+                            disabled="@(materiasSelecionadas.Count <= 1)"
+                            @onclick="() => RemoverMateria(linha)" aria-label="Remover matéria-prima">
+                        Remover
+                    </button>
+                </div>
+            }
+
+            <div class="materia-acoes">
+                <button type="button" class="btn btn-outline-info" disabled="@(materiasSelecionadas.Count >= 50)" @onclick="AdicionarMateria">
+                    + Adicionar matéria-prima / cor
+                </button>
+                <div class="peso-resumo">
+                    <span>Total distribuído</span>
+                    <strong>@materiasSelecionadas.Sum(x => x.Peso).ToString("N3") g</strong>
+                    <span>de @peso.ToString("N3") g</span>
+                </div>
+            </div>
+            <small class="form-help">A soma dos pesos de todas as matérias-primas deve corresponder ao peso total da impressão. Cada material será descontado separadamente do estoque.</small>
+        </div>
+
+        <div class="formulario-secao">
+            <h3>Dimensões e equipamento</h3>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label for="largura-peca">Largura (mm)</label>
+                    <input id="largura-peca" class="entrada form-control" type="number" min="0.001" max="100000"
+                           step="0.1" inputmode="decimal" placeholder="Ex.: 40" @bind="largura" />
+                </div>
+                <div class="form-field">
+                    <label for="comprimento-peca">Comprimento (mm)</label>
+                    <input id="comprimento-peca" class="entrada form-control" type="number" min="0.001" max="100000"
+                           step="0.1" inputmode="decimal" placeholder="Ex.: 60" @bind="comprimento" />
+                </div>
+                <div class="form-field">
+                    <label for="altura-peca">Altura (mm)</label>
+                    <input id="altura-peca" class="entrada form-control" type="number" min="0.001" max="100000"
+                           step="0.1" inputmode="decimal" placeholder="Ex.: 20" @bind="altura" />
+                </div>
+                <div class="form-field">
+                    <label for="impressora-peca">Impressora</label>
+                    <select id="impressora-peca" class="entrada form-control" @bind="idImpressora">
+                        <option value="0">Selecione uma impressora...</option>
+                        @foreach (var i in impressoras)
+                        {
+                            <option value="@i.Id">@i.Nome - @i.Modelo</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="estoque-peca">Estoque inicial (unidades)</label>
+                    <input id="estoque-peca" class="entrada form-control" type="number" min="0" max="10000000"
+                           step="1" inputmode="numeric" placeholder="0" @bind="estoqueInicial" @bind:event="oninput" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="formulario-footer">
+        <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar peça</button>
+        <button class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+@code {
+    private string nome = string.Empty;
+    private double peso, tempo, largura, comprimento, altura;
+    private int idImpressora, estoqueInicial;
+    private List<MateriaPrima> materias = new();
+    private List<Impressora> impressoras = new();
+    private List<MateriaPrimaPesoInput> materiasSelecionadas = new() { new() };
+    private string mensagemErro = string.Empty;
+    protected override void OnInitialized() { materias = RepositorioTechToys.ListarTodos<MateriaPrima>(); impressoras = RepositorioTechToys.ListarTodos<Impressora>(); }
+    private void AdicionarMateria() { if (materiasSelecionadas.Count < 50) materiasSelecionadas.Add(new MateriaPrimaPesoInput()); }
+    private void RemoverMateria(MateriaPrimaPesoInput linha) { if (materiasSelecionadas.Count > 1) materiasSelecionadas.Remove(linha); }
+    private void Salvar()
+    {
+        mensagemErro = string.Empty;
+        if (string.IsNullOrWhiteSpace(nome) || nome.Trim().Length > 120)
+        {
+            mensagemErro = "Informe o nome da peça (até 120 caracteres).";
+            return;
+        }
+        if (!double.IsFinite(peso) || peso <= 0 || peso > 100000)
+        {
+            mensagemErro = "Informe um peso total de impressão maior que zero.";
+            return;
+        }
+        if (!double.IsFinite(tempo) || tempo <= 0 || tempo > 1000000)
+        {
+            mensagemErro = "Informe um tempo de impressão maior que zero.";
+            return;
+        }
+        if (materiasSelecionadas.Count == 0 || materiasSelecionadas.Any(x => !materias.Any(m => m.Id == x.MateriaPrimaId) || !double.IsFinite(x.Peso) || x.Peso <= 0 || x.Peso > 100000))
+        {
+            mensagemErro = "Selecione uma matéria-prima válida e informe o peso utilizado em cada linha.";
+            return;
+        }
+        if (materiasSelecionadas.Select(x => x.MateriaPrimaId).Distinct().Count() != materiasSelecionadas.Count)
+        {
+            mensagemErro = "Não é permitido selecionar a mesma matéria-prima mais de uma vez. Some o peso em uma única linha.";
+            return;
+        }
+        if (Math.Abs(materiasSelecionadas.Sum(x => x.Peso) - peso) > 0.001)
+        {
+            mensagemErro = $"A soma dos pesos das matérias-primas ({materiasSelecionadas.Sum(x => x.Peso):N3} g) deve ser igual ao peso total ({peso:N3} g).";
+            return;
+        }
+        if (!double.IsFinite(largura) || largura <= 0 || largura > 100000)
+        {
+            mensagemErro = "Informe uma largura maior que zero (mm).";
+            return;
+        }
+        if (!double.IsFinite(comprimento) || comprimento <= 0 || comprimento > 100000)
+        {
+            mensagemErro = "Informe um comprimento maior que zero (mm).";
+            return;
+        }
+        if (!double.IsFinite(altura) || altura <= 0 || altura > 100000)
+        {
+            mensagemErro = "Informe uma altura maior que zero (mm).";
+            return;
+        }
+        if (!impressoras.Any(x => x.Id == idImpressora))
+        {
+            mensagemErro = "Selecione uma impressora válida.";
+            return;
+        }
+        if (estoqueInicial < 0 || estoqueInicial > 10000000)
+        {
+            mensagemErro = "O estoque inicial deve estar entre 0 e 10.000.000 unidades.";
+            return;
+        }
+        try { var impressora = impressoras.First(x => x.Id == idImpressora); RepositorioTechToys.CadastrarPeca(nome, materiasSelecionadas, impressora, peso, tempo, largura, comprimento, altura, estoqueInicial); NavigationManager.NavigateTo("/produtos/cadastrar"); }
+        catch (DbUpdateException)
+        {
+            mensagemErro = "Não foi possível salvar a peça. Verifique os dados informados e tente novamente.";
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex is ArgumentException or InvalidOperationException or UnauthorizedAccessException
+                ? ex.Message
+                : "Ocorreu um erro inesperado ao cadastrar a peça. Tente novamente.";
+        }
+    }
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

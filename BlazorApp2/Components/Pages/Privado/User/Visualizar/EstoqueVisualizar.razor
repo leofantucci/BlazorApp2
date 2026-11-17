@@ -1,0 +1,170 @@
+﻿@page "/estoque/visualizar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Estoque - Visualizar</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria">
+        <p>Estoque - Visualizar</p>
+    </div>
+
+    <div class="blueprint blueprint-2 mt-3">
+        <p class="texto-padrao-1">Filtrar por entidade</p>
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <label class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" @bind="mostrarProdutos" />
+                <span class="form-check-label">Produtos</span>
+            </label>
+            <label class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" @bind="mostrarPecas" />
+                <span class="form-check-label">Peças</span>
+            </label>
+            <label class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" @bind="mostrarEmbalagens" />
+                <span class="form-check-label">Embalagens</span>
+            </label>
+            <label class="form-check form-check-inline mb-0">
+                <input class="form-check-input" type="checkbox" @bind="mostrarMateriasPrimas" />
+                <span class="form-check-label">Matérias-primas</span>
+            </label>
+        </div>
+
+        <p class="texto-padrao-1 mt-3">Pesquisar no estoque</p>
+        <input class="entrada" type="search" @bind="termoBusca" @bind:event="oninput"
+               placeholder="Pesquise por nome, ID, tipo ou unidade..." />
+        <small class="text-muted">A tabela exibe somente as entidades marcadas e os itens que correspondem à pesquisa.</small>
+    </div>
+
+    @if (itensFiltrados.Count > 0)
+    {
+        <div class="tabela-container">
+            <table class="table table-striped table-bordered mt-3">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Tipo</th>
+                        <th>ID</th>
+                        <th>Item</th>
+                        <th>Quantidade em estoque</th>
+                        <th>Unidade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in itensFiltrados)
+                    {
+                        <tr>
+                            <td>@item.Tipo</td>
+                            <td>@item.Id</td>
+                            <td>@item.Nome</td>
+                            <td>@item.Quantidade.ToString("F1")</td>
+                            <td>@item.Unidade_Medida</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">
+            @(itensEstoque.Count == 0
+                ? "Nenhum produto, peça, embalagem ou matéria-prima cadastrado no estoque."
+                : "Nenhum item corresponde aos filtros selecionados.")
+        </p>
+        @if (itensEstoque.Count == 0)
+        {
+            <AuthorizeView Roles="admin, gerente">
+                <div class="area-botoes gap-2">
+                    <a class="btn btn-primary" href="/produtos/cadastrar">Cadastrar Produto</a>
+                    <a class="btn btn-primary" href="/pecas/cadastrar">Cadastrar Peça</a>
+                    <a class="btn btn-primary" href="/embalagens/cadastrar">Cadastrar Embalagem</a>
+                    <a class="btn btn-primary" href="/materias-primas/cadastrar">Cadastrar Matéria-prima</a>
+                </div>
+            </AuthorizeView>
+        }
+    }
+
+    <AuthorizeView Roles="admin, gerente">
+        <div class="area-botoes gap-2 mt-3">
+            <a class="btn btn-primary" href="/produtos/cadastrar">Cadastrar Produto</a>
+            <a class="btn btn-primary" href="/pecas/cadastrar">Cadastrar Peça</a>
+            <a class="btn btn-primary" href="/embalagens/cadastrar">Cadastrar Embalagem</a>
+            <a class="btn btn-primary" href="/materias-primas/cadastrar">Cadastrar Matéria-prima</a>
+        </div>
+    </AuthorizeView>
+    <div class="area-botoes gap-2 mt-3">
+        <AuthorizeView Roles="admin, gerente"><a class="btn btn-primary" href="/estoque/editar">Movimentar Estoque</a></AuthorizeView>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private List<ItemEstoqueView> itensEstoque = new();
+    private bool mostrarProdutos = true;
+    private bool mostrarPecas = true;
+    private bool mostrarEmbalagens = true;
+    private bool mostrarMateriasPrimas = true;
+    private string termoBusca = string.Empty;
+
+    private List<ItemEstoqueView> itensFiltrados => itensEstoque
+        .Where(item => item.Tipo switch
+        {
+            "Produto" => mostrarProdutos,
+            "Peça" => mostrarPecas,
+            "Embalagem" => mostrarEmbalagens,
+            "Matéria-prima" => mostrarMateriasPrimas,
+            _ => false
+        })
+        .Where(item => string.IsNullOrWhiteSpace(termoBusca) ||
+            item.Id.ToString().Contains(termoBusca.Trim(), StringComparison.OrdinalIgnoreCase) ||
+            item.Nome.Contains(termoBusca.Trim(), StringComparison.OrdinalIgnoreCase) ||
+            item.Tipo.Contains(termoBusca.Trim(), StringComparison.OrdinalIgnoreCase) ||
+            item.Unidade_Medida.Contains(termoBusca.Trim(), StringComparison.OrdinalIgnoreCase))
+        .ToList();
+
+    protected override void OnInitialized()
+    {
+        CarregarDados();
+    }
+
+    protected override void OnParametersSet()
+    {
+        CarregarDados();
+    }
+
+    private void CarregarDados()
+    {
+        try
+        {
+            var produtos = RepositorioTechToys.ListarTodos<Produto>() ?? new();
+            var pecas = RepositorioTechToys.ListarTodos<Peca>() ?? new();
+            var embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+            var materiasPrimas = RepositorioTechToys.ListarTodos<MateriaPrima>() ?? new();
+
+            itensEstoque = produtos.Select(x => new ItemEstoqueView("Produto", x.Id, x.Nome, RepositorioTechToys.ObterQuantidadeEstoque<Produto>(x.Id), "un."))
+                .Concat(pecas.Select(x => new ItemEstoqueView("Peça", x.Id, x.Nome, RepositorioTechToys.ObterQuantidadeEstoque<Peca>(x.Id), "un.")))
+                .Concat(embalagens.Select(x => new ItemEstoqueView("Embalagem", x.Id, x.Nome, RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(x.Id), "un.")))
+                .Concat(materiasPrimas.Select(x => new ItemEstoqueView("Matéria-prima", x.Id, x.Nome, RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(x.Id), "g")))
+                .OrderBy(x => x.Tipo)
+                .ThenBy(x => x.Nome)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar estoque: {ex.Message}");
+            itensEstoque = new();
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+
+    private record ItemEstoqueView(string Tipo, int Id, string Nome, decimal Quantidade, string Unidade_Medida);
+}

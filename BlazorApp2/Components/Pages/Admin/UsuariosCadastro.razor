@@ -1,0 +1,69 @@
+@page "/usuarios/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin")]
+
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Usuários - Cadastro</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Usuários - Cadastro</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert alert-danger">@mensagem</div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <label class="texto-padrao-1">Login do usuário</label>
+        <input class="entrada" maxlength="100" autocomplete="off" @bind="login" />
+
+        <label class="texto-padrao-1">Cargo</label>
+        <select class="entrada" @bind="cargo">
+            <option value="funcionario">Funcionário</option>
+            <option value="gerente">Gerente</option>
+            <option value="admin">Administrador</option>
+        </select>
+
+        <label class="texto-padrao-1">Senha (mínimo 10 caracteres)</label>
+        <input class="entrada" type="password" minlength="10" maxlength="1024"
+               autocomplete="new-password" @bind="senha" />
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string login = string.Empty;
+    private string cargo = "funcionario";
+    private string senha = string.Empty;
+    private string mensagem = string.Empty;
+
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(senha))
+        {
+            mensagem = "Preencha o login e a senha.";
+            return;
+        }
+
+        try
+        {
+            RepositorioTechToys.CadastrarUsuario(login, senha, cargo);
+            NavigationManager.NavigateTo("/usuarios/visualizar");
+        }
+        catch (Exception ex)
+        {
+            // Não exibir connection strings, SQL ou detalhes internos ao usuário.
+            mensagem = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar o usuário. Consulte os registros do servidor.";
+        }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

@@ -1,0 +1,28 @@
+# .NET
+[Bb]in/
+[Oo]bj/
+[Ll]ogs/
+*.user
+*.suo
+*.cache
+*.pdb
+*.dll
+*.exe
+
+# IDE
+.vs/
+.idea/
+.idea*/
+_ReSharper*/
+*.DotSettings.user
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+secrets*.json

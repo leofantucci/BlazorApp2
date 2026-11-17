@@ -1,0 +1,102 @@
+﻿@page "/embalagens/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Embalagens - Editar Embalagem</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Embalagem</p></div>
+
+    @if (embalagem != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="embalagem.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo</label>
+                <input class="form-control" @bind="embalagem.Tipo" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Largura</label>
+                <input class="form-control" type="number" @bind="embalagem.largura" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comprimento</label>
+                <input class="form-control" type="number" @bind="embalagem.comprimento" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Altura</label>
+                <input class="form-control" type="number" @bind="embalagem.altura" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Custo (R$)</label>
+                <input class="form-control" type="number" step="0.01" @bind="embalagem.Preco" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Fornecedor</label>
+                <select class="form-select" @bind="fornecedorId">
+                    @foreach (var f in fornecedores)
+                    {
+                        <option value="@f.Id">@f.Nome</option>
+                    }
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(mensagemErro))
+            {
+                <p class="text-danger">@mensagemErro</p>
+            }
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary mt-3" @onclick="js => Voltar()">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Embalagem não encontrada.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="js => Voltar()">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Embalagem? embalagem;
+    private List<Fornecedor> fornecedores = new();
+    private int fornecedorId;
+    private string? mensagemErro;
+
+    protected override void OnParametersSet()
+    {
+        embalagem = RepositorioTechToys.ListarTodos<Embalagem>()?.FirstOrDefault(e => e.Id == Id);
+        fornecedores = RepositorioTechToys.ListarTodos<Fornecedor>() ?? new List<Fornecedor>();
+        fornecedorId = embalagem?.Fornecedor?.Id ?? 0;
+    }
+
+    private void Salvar()
+    {
+        if (embalagem == null) return;
+
+        // Embalagens podem existir sem fornecedor; zero significa "sem fornecedor".
+        embalagem.Fornecedor = fornecedorId > 0
+            ? fornecedores.FirstOrDefault(f => f.Id == fornecedorId)
+            : null;
+
+        if (fornecedorId > 0 && embalagem.Fornecedor == null)
+        {
+            mensagemErro = "Fornecedor selecionado não encontrado.";
+            return;
+        }
+
+        mensagemErro = null;
+        RepositorioTechToys.Atualizar(embalagem);
+        NavigationManager.NavigateTo("/embalagens/visualizar");
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

@@ -1,0 +1,45 @@
+@page "/estoque/historico"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Histórico de Estoque</PageTitle>
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Histórico de Movimentações</p></div>
+    <div class="mt-3">
+        @if (movimentacoes.Count == 0)
+        {
+            <p class="texto-padrao-1">Nenhuma movimentação registrada.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark"><tr><th>Data/Hora</th><th>Item</th><th>Tipo</th><th>Operação</th><th>Quantidade</th><th>Origem</th><th>Referência</th><th>Usuário</th></tr></thead>
+                    <tbody>
+                        @foreach (var m in movimentacoes)
+                        {
+                            <tr>
+                                <td>@m.DataHora.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                <td>@m.NomeItem (ID @m.ItemId)</td><td>@m.TipoItem</td>
+                                <td>@m.Operacao</td><td>@m.Quantidade @m.Unidade</td>
+                                <td>@m.Origem</td><td>@(m.ReferenciaId?.ToString() ?? "-")</td><td>@m.Usuario</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <small>Exibindo até 500 movimentações mais recentes.</small>
+        }
+    </div>
+    <button class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+@code {
+    private List<MovimentacaoEstoque> movimentacoes = new();
+    protected override void OnInitialized() => movimentacoes = RepositorioTechToys.ListarMovimentacoesEstoque();
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

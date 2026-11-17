@@ -1,0 +1,158 @@
+﻿@page "/produtos/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Produtos - Cadastro</PageTitle>
+
+<style>
+    .produto-form { max-width: 1050px; margin: 0 auto; }
+    .produto-card { background: var(--bs-body-bg, #fff); border: 1px solid rgba(100,130,160,.28); border-radius: 14px; padding: clamp(16px, 3vw, 28px); margin: 18px 0; box-shadow: 0 5px 18px rgba(0,0,0,.06); }
+    .produto-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(230px,1fr)); gap: 16px; }
+    .produto-field label { display:block; font-weight:600; margin-bottom:7px; }
+    .produto-field .entrada { width:100%; }
+    .composicao-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+    .composicao-table { width:100%; border-collapse:collapse; }
+    .composicao-table th,.composicao-table td { padding:10px; border-bottom:1px solid rgba(120,140,160,.25); vertical-align:middle; }
+    .composicao-table select,.composicao-table input { width:100%; min-width:90px; }
+    .estoque-hint { display:block; font-size:.85rem; opacity:.75; margin-top:5px; }
+    @@media(max-width:650px) { .composicao-table thead { display:none; } .composicao-table tr { display:grid; grid-template-columns:1fr 110px auto; gap:8px; padding:10px 0; } .composicao-table td { border:0; padding:3px; } }
+</style>
+
+<div class="centralizado pagina-formulario produto-form">
+    <div class="faixaNinja corSecundaria"><p>Produtos - Cadastro</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert @(sucesso ? "alert-success" : "alert-danger")" role="alert">@mensagem</div>
+    }
+
+    <section class="produto-card">
+        <h5 class="mb-3">Informações do produto</h5>
+        <div class="produto-grid">
+            <div class="produto-field">
+                <label for="nomeProduto">Nome do produto</label>
+                <input id="nomeProduto" class="entrada" placeholder="Ex.: Pikachu" @bind="nome" />
+            </div>
+            <div class="produto-field">
+                <label for="valorVenda">Valor de venda (R$)</label>
+                <input id="valorVenda" class="entrada" type="number" min="0" step="0.01" @bind="valorVenda" />
+            </div>
+            <div class="produto-field">
+                <label for="estoqueInicial">Estoque inicial (unidades)</label>
+                <input id="estoqueInicial" class="entrada" type="number" min="0" step="1" @bind="estoqueInicial" />
+                <small class="estoque-hint">A composição será consumida automaticamente ao gerar o estoque inicial.</small>
+            </div>
+        </div>
+    </section>
+
+    <section class="produto-card">
+        <div class="composicao-head">
+            <div>
+                <h5 class="mb-1">Composição do produto</h5>
+                <small class="text-muted">Adicione cada peça e informe quantas unidades são necessárias para fabricar um produto.</small>
+            </div>
+            <button type="button" class="btn btn-primary" @onclick="AdicionarPeca" disabled="@(pecas.Count == 0)">+ Adicionar peça</button>
+        </div>
+
+        @if (pecas.Count == 0)
+        {
+            <div class="alert alert-warning mb-0">Nenhuma peça cadastrada. <a href="/pecas/cadastrar">Cadastre uma peça primeiro.</a></div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="composicao-table">
+                    <thead>
+                        <tr><th style="width:65%">Peça</th><th style="width:20%">Quantidade</th><th style="width:15%">Ação</th></tr>
+                    </thead>
+                    <tbody>
+                        @if (composicao.Count == 0)
+                        {
+                            <tr><td colspan="3" class="text-center text-muted">Nenhuma peça adicionada. Clique em “Adicionar peça”.</td></tr>
+                        }
+                        @foreach (var linha in composicao)
+                        {
+                            <tr @key="linha">
+                                <td>
+                                    <select class="entrada form-select" @bind="linha.ItemId">
+                                        <option value="0">Selecione uma peça...</option>
+                                        @foreach (var peca in pecas)
+                                        {
+                                            <option value="@peca.Id">@peca.Nome (Estoque: @estoquesPecas.GetValueOrDefault(peca.Id) UN)</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td><input class="entrada form-control" type="number" min="1" step="1" @bind="linha.Quantidade" /></td>
+                                <td><button type="button" class="btn btn-outline-danger btn-sm" @onclick="() => RemoverPeca(linha)">Remover</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+        <button type="button" class="btn btn-personalizado corSecundaria" @onclick="Salvar" disabled="@salvando">@(salvando ? "Cadastrando..." : "Cadastrar produto")</button>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private double valorVenda;
+    private int estoqueInicial;
+    private List<Peca> pecas = new();
+    private List<ItemQuantidadeInput> composicao = new();
+    private Dictionary<int, decimal> estoquesPecas = new();
+    private string mensagem = string.Empty;
+    private bool sucesso;
+    private bool salvando;
+
+    protected override void OnInitialized()
+    {
+        pecas = RepositorioTechToys.ListarTodos<Peca>() ?? new();
+        foreach (var peca in pecas)
+            estoquesPecas[peca.Id] = RepositorioTechToys.ObterQuantidadeEstoque<Peca>(peca.Id);
+        if (pecas.Count > 0) AdicionarPeca();
+    }
+
+    private void AdicionarPeca() => composicao.Add(new ItemQuantidadeInput { ItemId = 0, Quantidade = 1 });
+    private void RemoverPeca(ItemQuantidadeInput linha) => composicao.Remove(linha);
+
+    private void Salvar()
+    {
+        mensagem = string.Empty;
+        sucesso = false;
+        if (salvando) return;
+        if (string.IsNullOrWhiteSpace(nome) || !double.IsFinite(valorVenda) || valorVenda < 0 || estoqueInicial < 0)
+        { mensagem = "Informe o nome e valores válidos para o produto."; return; }
+        if (composicao.Count == 0 || composicao.Any(x => x.ItemId <= 0 || x.Quantidade <= 0))
+        { mensagem = "Adicione pelo menos uma peça e informe uma quantidade válida em cada linha."; return; }
+        if (composicao.GroupBy(x => x.ItemId).Any(g => g.Count() > 1))
+        { mensagem = "A mesma peça foi selecionada mais de uma vez. Ajuste a quantidade na própria linha."; return; }
+
+        try
+        {
+            salvando = true;
+            RepositorioTechToys.CadastrarProduto(nome.Trim(), valorVenda, composicao, estoqueInicial);
+            sucesso = true;
+            mensagem = "Produto cadastrado com sucesso.";
+            NavigationManager.NavigateTo("/produtos/visualizar");
+        }
+        catch (Exception ex)
+        {
+            mensagem = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar o produto. Verifique os dados e tente novamente.";
+        }
+        finally { salvando = false; }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

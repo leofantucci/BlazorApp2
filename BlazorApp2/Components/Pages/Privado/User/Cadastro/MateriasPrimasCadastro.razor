@@ -1,0 +1,109 @@
+﻿@page "/materias-primas/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Materias-Primas - Cadastro</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Materias-Primas - Cadastro</p></div>
+
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-3 formulario-card">
+        <p class="texto-padrao-1">Insira o NOME da matéria-prima</p><br/>
+        <input class="entrada" placeholder="Matéria-prima Principal" @bind="nome" /><br/>
+
+        <a class="texto-padrao-1">Insira o PESO de COMPRA da matéria-prima (g)</a><br/>
+        <input class="entrada" type="number" placeholder="1000" @bind="peso_compra" /><br/>
+
+        <a class="texto-padrao-1">Insira o PREÇO de COMPRA da matéria-prima (R$)</a><br/>
+        <input class="entrada" type="number" step="0.01" placeholder="68.90" @bind="preco_compra" /><br/>
+
+        <a class="texto-padrao-1">Insira o ESTOQUE inicial da matéria-prima (g)</a><br/>
+        <input class="entrada" type="number" min="0" step="1" placeholder="0" @bind="estoque" /><br/>
+
+        <label class="texto-padrao-1">Selecione o FORNECEDOR da matéria-prima</label><br/>
+        <select class="entrada" @bind="idFornecedor">
+            <option value="0">Selecione um fornecedor...</option>
+            @foreach (var f in fornecedores)
+            {
+                <option value="@f.Id">@f.Id - @f.Nome</option>
+            }
+        </select><br/>
+
+        <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+        <br/>
+    </div>
+
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private int peso_compra = 1000;
+    private double preco_compra;
+    private int estoque;
+    private int idFornecedor;
+    private List<Fornecedor> fornecedores = new();
+
+    private string mensagemErro = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        fornecedores = RepositorioTechToys.ListarTodos<Fornecedor>() ?? new();
+    }
+
+    private void Salvar()
+    {
+        mensagemErro = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(nome) || idFornecedor <= 0)
+        {
+            mensagemErro = "Informe o nome e selecione um fornecedor válido.";
+            return;
+        }
+
+        if (peso_compra <= 0 || preco_compra < 0 || !double.IsFinite(preco_compra) || estoque < 0)
+        {
+            mensagemErro = "Peso deve ser maior que zero; preço e estoque não podem ser negativos.";
+            return;
+        }
+
+        try
+        {
+            var fornecedor = fornecedores.FirstOrDefault(f => f.Id == idFornecedor)
+                ?? RepositorioTechToys.ObterPorId<Fornecedor>(idFornecedor);
+
+            if (fornecedor == null)
+            {
+                mensagemErro = "O fornecedor selecionado não foi encontrado.";
+                return;
+            }
+
+            RepositorioTechToys.CadastrarMateriaPrima(nome, peso_compra, preco_compra, fornecedor, estoque);
+
+            NavigationManager.NavigateTo("/materias-primas/visualizar");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao cadastrar matéria-prima: {ex}");
+            mensagemErro = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar a matéria-prima. Consulte os registros do servidor.";
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

@@ -1,0 +1,47 @@
+@page "/inicio"
+@using Microsoft.AspNetCore.Authorization
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+<PageTitle>Infinity Soluções - Gestão</PageTitle>
+
+<h1 class="faixaNinja" style="margin: 0 !important; width: 100% !important;">Painel - Infinity Soluções - Gestão</h1>
+
+<div class="container-personalizado">
+    <a href="visao-geral" class="card-personalizado">
+        <img class="foto" src="Media/visaogeral.webp"/>
+        <span class="texto-padrao-1">Visão-Geral</span>
+    </a>
+    <AuthorizeView Roles="admin, gerente">
+        <a href="financeiro" class="card-personalizado">
+            <img class="foto" src="Media/financeiro.webp"/>
+            <span class="texto-padrao-1">Financeiro</span>
+        </a>
+    </AuthorizeView>
+    <AuthorizeView Roles="admin">
+        <a href="placas" class="card-personalizado">
+            <img class="foto" src="Media/PlacaIcon.webp"/>
+            <span class="texto-padrao-1">Placas NFC</span>
+        </a>
+        <a href="/usuarios/visualizar" class="card-personalizado">
+            <img class="foto" src="Media/cliente.webp"/>
+            <span class="texto-padrao-1">Usuários</span>
+        </a>
+        <a href="/auditoria" class="card-personalizado">
+            <img class="foto" src="Media/auditoria.webp"/>
+            <span class="texto-padrao-1">Auditoria</span>
+        </a>
+    </AuthorizeView>
+    
+    <div class="area-botoes">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+    
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

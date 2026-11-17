@@ -1,0 +1,207 @@
+﻿@page "/vendas/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Vendas - Editar Venda</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Venda</p></div>
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert @(sucesso ? "alert-success" : "alert-danger")">@mensagem</div>
+    }
+    @if (venda != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card">
+            <label class="texto-padrao-1">Cliente</label>
+            <select class="entrada" @bind="clienteId">
+                @foreach (var c in clientes)
+                {
+                    <option value="@c.Id">@c.Id - @c.Nome</option>
+                }
+            </select>
+
+            <!-- ÁREA 1: PRODUTOS -->
+            <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                <span class="texto-padrao-1">Produtos da Venda</span>
+                <button type="button" class="btn btn-sm btn-primary" @onclick="AdicionarProduto">
+                    + Adicionar Produto
+                </button>
+            </div>
+
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 65%;">Produto</th>
+                        <th style="width: 20%;">Quantidade</th>
+                        <th style="width: 15%;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in itensProdutos)
+                    {
+                        <tr>
+                            <td>
+                                <select class="entrada form-select" @bind="item.ItemId">
+                                    <option value="0">Selecione um produto...</option>
+                                    @foreach (var p in produtos)
+                                    {
+                                        <option value="@p.Id">@p.Id - @p.Nome (Estoque: @(RepositorioTechToys.ObterQuantidadeEstoque<Produto>(p.Id)))</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input class="entrada form-control" type="number" min="1" @bind="item.Quantidade" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoverProduto(item)">Remover</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- ÁREA 2: EMBALAGENS -->
+            <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                <span class="texto-padrao-1">Embalagens da Venda (Opcional)</span>
+                <button type="button" class="btn btn-sm btn-secondary" @onclick="AdicionarEmbalagem">
+                    + Adicionar Embalagem
+                </button>
+            </div>
+
+            <table class="table table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th style="width: 65%;">Embalagem</th>
+                        <th style="width: 20%;">Quantidade</th>
+                        <th style="width: 15%;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (itensEmbalagens.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">Nenhuma embalagem adicionada.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var emb in itensEmbalagens)
+                        {
+                            <tr>
+                                <td>
+                                    <select class="entrada form-select" @bind="emb.ItemId">
+                                        <option value="0">Selecione uma embalagem...</option>
+                                        @foreach (var e in embalagens)
+                                        {
+                                            <option value="@e.Id">@e.Id - @e.Nome (Estoque: @(RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(e.Id)))</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="entrada form-control" type="number" min="1" @bind="emb.Quantidade" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoverEmbalagem(emb)">Remover</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Salvar alterações</button>
+    }
+    else if (carregou)
+    {
+        <p>Venda não encontrada.</p>
+    }
+    <button class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Venda? venda;
+    private List<Cliente> clientes = new();
+    private List<Produto> produtos = new();
+    private List<Embalagem> embalagens = new();
+
+    private List<ItemQuantidadeInput> itensProdutos = new();
+    private List<ItemQuantidadeInput> itensEmbalagens = new();
+
+    private int clienteId;
+    private bool carregou, sucesso;
+    private string mensagem = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        venda = RepositorioTechToys.ObterPorId<Venda>(Id);
+        clientes = RepositorioTechToys.ListarTodos<Cliente>() ?? new();
+        produtos = RepositorioTechToys.ListarTodos<Produto>() ?? new();
+        embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+
+        if (venda != null)
+        {
+            clienteId = venda.Cliente.Id;
+            itensProdutos = venda.ItensVenda.Select(i => new ItemQuantidadeInput
+            {
+                ItemId = i.ProdutoId,
+                Quantidade = i.Quantidade
+            }).ToList();
+
+            itensEmbalagens = venda.EmbalagensVenda.Select(e => new ItemQuantidadeInput
+            {
+                ItemId = e.EmbalagemId,
+                Quantidade = e.Quantidade
+            }).ToList();
+        }
+        carregou = true;
+    }
+
+    private void AdicionarProduto() => itensProdutos.Add(new ItemQuantidadeInput { ItemId = 0, Quantidade = 1 });
+    private void RemoverProduto(ItemQuantidadeInput item) => itensProdutos.Remove(item);
+
+    private void AdicionarEmbalagem() => itensEmbalagens.Add(new ItemQuantidadeInput { ItemId = 0, Quantidade = 1 });
+    private void RemoverEmbalagem(ItemQuantidadeInput item) => itensEmbalagens.Remove(item);
+
+    private void Salvar()
+    {
+        mensagem = string.Empty;
+        sucesso = false;
+
+        if (clienteId <= 0 || itensProdutos.Count == 0 || itensProdutos.Any(p => p.ItemId <= 0 || p.Quantidade <= 0))
+        {
+            mensagem = "Confira o cliente e todos os produtos e quantidades.";
+            return;
+        }
+
+        if (itensEmbalagens.Any(e => e.ItemId <= 0 || e.Quantidade <= 0))
+        {
+            mensagem = "Preencha corretamente todas as embalagens adicionadas ou remova as linhas vazias.";
+            return;
+        }
+
+        try
+        {
+            RepositorioTechToys.AtualizarVendaSobDemanda(Id, clienteId, itensProdutos, itensEmbalagens, venda?.Data_Hora ?? DateTime.UtcNow);
+            sucesso = true;
+            mensagem = "Venda atualizada e estoque sincronizado.";
+            NavigationManager.NavigateTo("/vendas/visualizar");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao atualizar venda: {ex}");
+            mensagem = ex is InvalidOperationException or ArgumentException
+                ? ex.Message
+                : "Não foi possível atualizar a venda. O estoque não foi alterado parcialmente; atualize e tente novamente.";
+        }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

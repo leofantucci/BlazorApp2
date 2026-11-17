@@ -1,0 +1,63 @@
+﻿@page "/clientes/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Clientes - Editar Clientes</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Cliente</p></div>
+
+    @if (cliente != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="cliente.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Telefone</label>
+                <input class="form-control" @bind="cliente.Telefone" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" @bind="cliente.Email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Instagram</label>
+                <input class="form-control" @bind="cliente.Instagram" />
+            </div>
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Cliente não encontrado.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Cliente? cliente;
+
+    protected override void OnParametersSet()
+    {
+        cliente = RepositorioTechToys.ListarTodos<Cliente>()?.FirstOrDefault(f => f.Id == Id);
+    }
+
+    private void Salvar()
+    {
+        if (cliente == null) return;
+        RepositorioTechToys.Atualizar(cliente); // ajuste conforme o método real
+        NavigationManager.NavigateTo("/clientes/visualizar");
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

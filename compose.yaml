@@ -1,0 +1,19 @@
+
+services:
+  blazorapp2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: blazorapp2
+
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DATABASE_URL: ${DATABASE_URL}
+      BOOTSTRAP_ADMIN_LOGIN: ${BOOTSTRAP_ADMIN_LOGIN}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+
+    ports:
+      - "8080:10000"

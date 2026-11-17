@@ -1,0 +1,136 @@
+@page "/financeiro/relatorios"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Financeiro - Relatórios</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Relatórios Consolidados</p></div>
+
+    <div class="blueprint blueprint-2 mt-3">
+        <h5 class="texto-padrao-1">Desempenho por Matéria-Prima</h5>
+        <p class="text-muted small">Mostra quanto de lucro os produtos feitos com cada material geraram nas vendas.</p>
+        
+        @if (carregando)
+        {
+            <p>Carregando...</p>
+        }
+        else
+        {
+            <table class="table table-sm table-bordered mt-2">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Matéria-Prima</th>
+                        <th>Consumo (g)</th>
+                        <th>Receita Gerada</th>
+                        <th>Lucro Gerado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in RelatorioMateriaPrima)
+                    {
+                        <tr>
+                            <td>@r.NomeMateria</td>
+                            <td>@r.ConsumoGramas.ToString("N3") g</td>
+                            <td>R$ @r.Receita.ToString("N2")</td>
+                            <td class="text-success">R$ @r.Lucro.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="area-botoes mt-3">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private bool carregando = true;
+    private List<RelatorioMateriaPrimaItem> RelatorioMateriaPrima = new();
+    private sealed class RelatorioMateriaPrimaItem
+    {
+        public string NomeMateria { get; set; } = string.Empty;
+        public double ConsumoGramas { get; set; }
+        public double Receita { get; set; }
+        public double Lucro { get; set; }
+    }
+
+    protected override void OnInitialized() => Carregar();
+
+    private void Carregar()
+    {
+        try
+        {
+            carregando = true;
+            var vendas = RepositorioTechToys.ListarTodos<Venda>() ?? new();
+            
+            // Distribui receita e lucro proporcionalmente ao custo de cada matéria-prima
+            // consumida pelas peças que compõem os produtos vendidos.
+            var totais = new Dictionary<string, RelatorioMateriaPrimaItem>(StringComparer.OrdinalIgnoreCase);
+            foreach (var venda in vendas)
+            foreach (var item in venda.ItensVenda)
+            {
+                var produto = item.Produto;
+                if (produto == null || item.Quantidade <= 0) continue;
+                var consumoPorMaterial = new Dictionary<MateriaPrima, double>();
+                if (produto.Composicao.Count > 0)
+                {
+                    foreach (var linhaPeca in produto.Composicao)
+                    {
+                        if (linhaPeca.Peca == null || linhaPeca.Quantidade <= 0) continue;
+                        if (linhaPeca.Peca.MateriasPrimas.Count > 0)
+                        {
+                            foreach (var mp in linhaPeca.Peca.MateriasPrimas)
+                                consumoPorMaterial[mp.MateriaPrima] = consumoPorMaterial.GetValueOrDefault(mp.MateriaPrima) + mp.Peso * linhaPeca.Quantidade * item.Quantidade;
+                        }
+                        else if (linhaPeca.Peca.Materia_Prima != null)
+                        {
+                            var mp = linhaPeca.Peca.Materia_Prima;
+                            consumoPorMaterial[mp] = consumoPorMaterial.GetValueOrDefault(mp) + linhaPeca.Peca.Peso_Impressao * linhaPeca.Quantidade * item.Quantidade;
+                        }
+                    }
+                }
+                else if (produto.Materia_Prima != null)
+                {
+                    consumoPorMaterial[produto.Materia_Prima] = produto.Peso_Impressao * item.Quantidade;
+                }
+
+                var custoMateriais = consumoPorMaterial.Sum(x => x.Value * x.Key.Calcular_Preco_Grama());
+                if (custoMateriais <= 0) continue;
+                var receita = item.Calcular_Subtotal();
+                var lucro = (produto.Valor_Venda - produto.Calcular_Custo_Total()) * item.Quantidade;
+                foreach (var consumo in consumoPorMaterial)
+                {
+                    var nomeMateria = consumo.Key.Nome;
+                    if (!totais.TryGetValue(nomeMateria, out var registro))
+                    {
+                        registro = new RelatorioMateriaPrimaItem { NomeMateria = nomeMateria };
+                        totais[nomeMateria] = registro;
+                    }
+                    var proporcao = consumo.Value * consumo.Key.Calcular_Preco_Grama() / custoMateriais;
+                    registro.ConsumoGramas += consumo.Value;
+                    registro.Receita += receita * proporcao;
+                    registro.Lucro += lucro * proporcao;
+                }
+            }
+            RelatorioMateriaPrima = totais.Values.OrderByDescending(x => x.Lucro).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao gerar relatório: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

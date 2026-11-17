@@ -1,0 +1,49 @@
+﻿@page "/usuarios"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin")]
+
+@using Microsoft.AspNetCore.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Usuários</PageTitle>
+
+<h1 class="faixaNinja">Usuários</h1>
+
+<div class="sera">
+    <!-- Grid com os cards -->
+    <div class="container-personalizado-2">
+        <div class="card-personalizado-2">
+            <a href="usuarios/visualizar"><img class="foto-2" src="Media/visualizar.webp" alt="Icone-Visualizar"/></a>
+            <a class="texto-padrao-1" href="usuarios/visualizar">Visualizar</a>
+        </div>
+        <div class="card-personalizado-2">
+        <a href="usuarios/cadastrar"><img class="foto-2" src="Media/cadastrar.webp" alt="Icone-Cadastrar"/></a>
+        <a class="texto-padrao-1" href="usuarios/cadastrar">Cadastrar</a>
+        </div>
+        
+        <div class="card-personalizado-2">
+            <a href="usuarios/editar"><img class="foto-2" src="Media/editar.webp" alt="Icone-Editar"/></a>
+            <a class="texto-padrao-1" href="usuarios/editar">Editar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="usuarios/remover"><img class="foto-2" src="Media/deletar.webp" alt="Icone-Deletar"/></a>
+            <a class="texto-padrao-1" href="usuarios/remover">Deletar</a>
+        </div>
+        
+    </div>
+
+    <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+    <div class="area-botoes">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

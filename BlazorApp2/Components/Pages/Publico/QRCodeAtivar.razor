@@ -1,0 +1,285 @@
+@page "/placas/qr/{CodigoPublico}"
+@rendermode InteractiveServer
+@attribute [AllowAnonymous]
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject IDbContextFactory<MyDBContext> DbFactory
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ILogger<QRCode> Logger
+
+<PageTitle>Ativar QR Code</PageTitle>
+
+<div class="container py-5" style="max-width:620px;">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <div style="font-size:48px;">▦</div>
+                <h2>QR Code Dinâmico</h2>
+                <p class="text-muted">Ativação e redirecionamento seguro</p>
+            </div>
+
+            @if (carregando)
+            {
+                <p class="text-center">Verificando QR Code...</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(mensagem))
+            {
+                <div class="alert @(sucesso ? "alert-success" : "alert-danger")">@mensagem</div>
+                @if (ativadoAgora)
+                {
+                    <p>Seu QR Code foi configurado. A partir da próxima leitura, ele abrirá o endereço cadastrado.</p>
+                    <a class="btn btn-primary w-100" href="@($"/placas/qr/{CodigoPublico}/editar")">Acessar painel de edição</a>
+                }
+            }
+            else if (registro is null)
+            {
+                <div class="alert alert-danger">Este QR Code não existe ou não está disponível.</div>
+            }
+            else if (registro.Status == StatusQRCode.Pendente)
+            {
+                <h4>Ativar seu QR Code</h4>
+                <p class="text-muted">Informe o código de ativação recebido com sua placa, crie uma senha e cadastre o endereço de destino.</p>
+                <div class="mb-3">
+                    <label class="form-label">Código de ativação</label>
+                    <input class="form-control"
+                           @bind="codigoAtivacao"
+                           @bind:event="oninput"
+                           @bind:after="NormalizarCodigo"
+                           autocomplete="one-time-code"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           style="text-transform: uppercase;" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Crie uma senha (mínimo de 8 caracteres)</label>
+                    <input class="form-control" type="password" @bind="senha" autocomplete="new-password" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Link de destino</label>
+                    <input class="form-control" type="url" @bind="linkDestino" placeholder="https://seusite.com.br" />
+                </div>
+                <button class="btn btn-primary w-100" @onclick="Ativar" disabled="@processando">
+                    @(processando ? "Ativando..." : "Ativar QR Code")
+                </button>
+            }
+            else if (registro.Status == StatusQRCode.Bloqueado)
+            {
+                <div class="alert alert-warning">Este QR Code está temporariamente bloqueado. Entre em contato com o responsável.</div>
+            }
+            else if (registro.Status == StatusQRCode.Cancelado)
+            {
+                <div class="alert alert-secondary">Este QR Code foi cancelado e não pode mais ser utilizado.</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string CodigoPublico { get; set; } = string.Empty;
+
+    private QRCode? registro;
+    private bool carregando = true;
+    private bool processando;
+    private bool sucesso;
+    private bool ativadoAgora;
+    private string? codigoCarregado;
+    private string mensagem = string.Empty;
+    private string codigoAtivacao = string.Empty;
+    private string senha = string.Empty;
+    private string linkDestino = string.Empty;
+
+    private string? _urlRedirecionamento;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        carregando = true;
+        mensagem = string.Empty;
+        ativadoAgora = false;
+        _urlRedirecionamento = null;
+
+        if (!string.Equals(codigoCarregado, CodigoPublico, StringComparison.Ordinal))
+        {
+            codigoCarregado = CodigoPublico;
+            registro = null;
+            codigoAtivacao = string.Empty;
+            senha = string.Empty;
+            linkDestino = string.Empty;
+        }
+
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            registro = await db.QRCode.FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+            if (registro is null) return;
+
+            if (registro.Status == StatusQRCode.Ativo)
+            {
+                if (Uri.TryCreate(registro.LinkDestino, UriKind.Absolute, out var destino) &&
+                    (destino.Scheme == Uri.UriSchemeHttp || destino.Scheme == Uri.UriSchemeHttps))
+                {
+                    registro.TotalAcessos++;
+                    registro.UltimoAcessoUtc = DateTime.UtcNow;
+                    await db.SaveChangesAsync();
+                    _urlRedirecionamento = destino.ToString();
+                    return;
+                }
+
+                mensagem = "O endereço configurado é inválido. Acesse o painel do proprietário para corrigir.";
+                sucesso = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[PlacasQR] Falha ao consultar QR {Codigo}", CodigoPublico);
+            mensagem = "Não foi possível consultar este QR Code no momento.";
+            sucesso = false;
+        }
+        finally { carregando = false; }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+        if (!string.IsNullOrWhiteSpace(_urlRedirecionamento))
+        {
+            Navigation.NavigateTo(_urlRedirecionamento, forceLoad: true);
+        }
+    }
+
+    private void NormalizarCodigo()
+    {
+        codigoAtivacao = codigoAtivacao.Trim().ToUpperInvariant();
+    }
+
+    private async Task Ativar()
+    {
+        if (processando) return;
+
+        // DIAGNÓSTICO: confirma se o handler está sendo chamado no circuito anônimo.
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        Logger.LogInformation(
+            "[Ativar] Handler chamado. Autenticado={IsAuth}, Codigo={Codigo}",
+            authState.User.Identity?.IsAuthenticated ?? false,
+            CodigoPublico);
+
+        processando = true;
+        mensagem = string.Empty;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(codigoAtivacao) ||
+                string.IsNullOrWhiteSpace(senha) || senha.Length < 8)
+            {
+                mensagem = "Informe o código de ativação e uma senha com pelo menos 8 caracteres.";
+                sucesso = false;
+                return;
+            }
+
+            if (!ValidarLink(linkDestino, out var linkNormalizado))
+            {
+                mensagem = "Informe um link válido começando com http:// ou https://.";
+                sucesso = false;
+                return;
+            }
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var qr = await db.QRCode.FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+            if (qr is null)
+            {
+                mensagem = "QR Code não encontrado.";
+                sucesso = false;
+                return;
+            }
+
+            if (qr.Status != StatusQRCode.Pendente)
+            {
+                Logger.LogWarning("[Ativar] QR {Codigo} status={Status}, esperado Pendente", CodigoPublico, qr.Status);
+                mensagem = "Este QR Code já foi ativado ou não está disponível.";
+                sucesso = false;
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(qr.CodigoAtivacaoHash))
+            {
+                Logger.LogWarning("[Ativar] QR {Codigo} sem CodigoAtivacaoHash", CodigoPublico);
+                mensagem = "Este QR Code não possui código de ativação configurado. Contate o suporte.";
+                sucesso = false;
+                return;
+            }
+
+            if (qr.BloqueadoAteUtc.HasValue && qr.BloqueadoAteUtc.Value > DateTime.UtcNow)
+            {
+                var restante = (int)Math.Ceiling((qr.BloqueadoAteUtc.Value - DateTime.UtcNow).TotalMinutes);
+                mensagem = $"Muitas tentativas. Aguarde {restante} minuto(s) antes de tentar novamente.";
+                sucesso = false;
+                return;
+            }
+
+            var codigoNormalizado = codigoAtivacao.Trim().ToUpperInvariant();
+            var verificador = new PasswordHasher<QRCode>();
+            var resultado = verificador.VerifyHashedPassword(
+                qr,
+                qr.CodigoAtivacaoHash,
+                codigoNormalizado);
+            if (resultado == PasswordVerificationResult.Failed)
+            {
+                qr.TentativasSenha++;
+                if (qr.TentativasSenha >= 5)
+                {
+                    qr.TentativasSenha = 0;
+                    qr.BloqueadoAteUtc = DateTime.UtcNow.AddMinutes(15);
+                }
+                await db.SaveChangesAsync();
+                Logger.LogWarning("[Ativar] Código de ativação incorreto para QR {Codigo}. Tentativas={Tentativas}",
+                    CodigoPublico, qr.TentativasSenha);
+                mensagem = qr.BloqueadoAteUtc.HasValue
+                    ? "Limite de tentativas atingido. Este QR Code foi bloqueado por 15 minutos."
+                    : "Código de ativação incorreto.";
+                sucesso = false;
+                return;
+            }
+
+            qr.SenhaHash = verificador.HashPassword(qr, senha);
+            qr.CodigoAtivacaoHash = null;
+            qr.CodigoAtivacao = null;
+            qr.TentativasSenha = 0;
+            qr.BloqueadoAteUtc = null;
+            qr.LinkDestino = linkNormalizado;
+            qr.Status = StatusQRCode.Ativo;
+            qr.DataAtivacaoUtc = DateTime.UtcNow;
+            qr.DataAtualizacaoUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+
+            Logger.LogInformation("[Ativar] QR {Codigo} ativado com sucesso.", CodigoPublico);
+
+            registro = qr;
+            mensagem = "QR Code ativado com sucesso!";
+            sucesso = true;
+            ativadoAgora = true;
+            codigoAtivacao = string.Empty;
+            senha = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            // Log completo para diagnóstico; mensagem genérica para o visitante.
+            Logger.LogError(ex, "[Ativar] Exceção ao ativar QR {Codigo}", CodigoPublico);
+            mensagem = "Não foi possível ativar o QR Code no momento. Tente novamente.";
+            sucesso = false;
+        }
+        finally { processando = false; }
+    }
+
+    private static bool ValidarLink(string? valor, out string normalizado)
+    {
+        normalizado = string.Empty;
+        if (!Uri.TryCreate(valor?.Trim(), UriKind.Absolute, out var uri)) return false;
+        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return false;
+        normalizado = uri.ToString();
+        return true;
+    }
+}

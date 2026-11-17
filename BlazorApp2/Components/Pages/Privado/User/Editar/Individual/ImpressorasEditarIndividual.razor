@@ -1,0 +1,59 @@
+﻿@page "/impressoras/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Impressoras - Editar Impressora</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Impressora</p></div>
+
+    @if (impressora != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="impressora.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Modelo</label>
+                <input class="form-control" @bind="impressora.Modelo" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Consumo (kWh)</label>
+                <input class="form-control" type="number" step="0.01" @bind="impressora.Kwh" />
+            </div>
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Impressora não encontrada.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Impressora? impressora;
+
+    protected override void OnParametersSet()
+    {
+        impressora = RepositorioTechToys.ListarTodos<Impressora>()?.FirstOrDefault(i => i.Id == Id);
+    }
+
+    private void Salvar()
+    {
+        if (impressora == null) return;
+        RepositorioTechToys.Atualizar(impressora); // ajuste conforme o método real
+        NavigationManager.NavigateTo("/impressoras/visualizar");
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

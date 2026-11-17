@@ -1,0 +1,59 @@
+@page "/pecas"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Peças 3D</PageTitle>
+
+<h1 class="faixaNinja">Peças 3D</h1>
+
+@if (!string.IsNullOrEmpty(mensagem))
+{
+    <div class="alert @(sucesso ? "alert-success" : "alert-danger") mt-3">
+        @mensagem
+    </div>
+}
+
+<div class="container-personalizado-2">
+    <div class="card-personalizado-2">
+        <a href="pecas/visualizar"><img class="foto-2" src="Media/visualizar.webp" alt="Icone-Visualizar"/></a>
+        <a class="texto-padrao-1" href="pecas/visualizar">Visualizar</a>
+    </div>
+    <AuthorizeView Roles="admin, gerente">
+        <div class="card-personalizado-2">
+            <a href="pecas/cadastrar"><img class="foto-2" src="Media/cadastrar.webp" alt="Icone-Cadastrar"/></a>
+            <a class="texto-padrao-1" href="pecas/cadastrar">Cadastrar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="pecas/editar"><img class="foto-2" src="Media/editar.webp" alt="Icone-Editar"/></a>
+            <a class="texto-padrao-1" href="pecas/editar">Editar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="pecas/remover"><img class="foto-2" src="Media/deletar.webp" alt="Icone-Deletar"/></a>
+            <a class="texto-padrao-1" href="pecas/remover">Deletar</a>
+        </div>
+    </AuthorizeView>
+
+</div>
+
+<!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+<div class="area-botoes">
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string mensagem = string.Empty;
+    private bool sucesso = true;
+    
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

@@ -1,0 +1,40 @@
+@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+<PageTitle>Login - Infinity Soluções - Gestão</PageTitle>
+
+<div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="card p-4 shadow-sm" style="width: 100%; max-width: 380px;">
+        <h3 class="text-center mb-3">Infinity Soluções - Gestão</h3>
+
+        @if (TemErro)
+        {
+            <div class="alert alert-danger py-2">
+                Usuário ou senha incorretos!
+            </div>
+        }
+
+        <form method="post" action="/api/auth/login">
+            <AntiforgeryToken />
+            <div class="mb-3">
+                <label class="form-label">Usuário</label>
+                <input type="text" name="login" class="form-control" required autocomplete="username" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Senha</label>
+                <input type="password" name="senha" class="form-control" required autocomplete="current-password" />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "erro")]
+    public string? ErroParam { get; set; }
+
+    private bool TemErro => !string.IsNullOrEmpty(ErroParam);
+}

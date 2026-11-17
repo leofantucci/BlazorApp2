@@ -1,0 +1,50 @@
+﻿@page "/produtos"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Produtos</PageTitle>
+
+<h1 class="faixaNinja">Produtos</h1>
+
+<div class="sera">
+    <!-- Grid com os cards -->
+    <div class="card-personalizado-2">
+        <a href="produtos/visualizar"><img class="foto-2" src="Media/visualizar.webp" alt="Icone-Visualizar"/></a>
+        <a class="texto-padrao-1" href="produtos/visualizar">Visualizar</a>
+    </div>
+    <div class="container-personalizado-2">
+        <AuthorizeView Roles="admin, gerente">
+        <div class="card-personalizado-2">
+            <a href="produtos/cadastrar"><img class="foto-2" src="Media/cadastrar.webp" alt="Icone-Cadastrar"/></a>
+            <a class="texto-padrao-1" href="produtos/cadastrar">Cadastrar</a>
+        </div>
+        
+        <div class="card-personalizado-2">
+            <a href="produtos/editar"><img class="foto-2" src="Media/editar.webp" alt="Icone-Editar"/></a>
+            <a class="texto-padrao-1" href="produtos/editar">Editar</a>
+        </div>
+        <div class="card-personalizado-2">
+            <a href="produtos/remover"><img class="foto-2" src="Media/deletar.webp" alt="Icone-Deletar"/></a>
+            <a class="texto-padrao-1" href="produtos/remover">Deletar</a>
+        </div>
+        </AuthorizeView>
+        
+    </div>
+
+    <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+    <div class="area-botoes">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

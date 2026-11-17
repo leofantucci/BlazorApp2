@@ -1,0 +1,91 @@
+﻿@page "/materias-primas/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Materias-Primas - Editar Materia Prima</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Materia Prima</p></div>
+
+    @if (materia != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="materia.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Preço (R$)</label>
+                <input class="form-control" type="number" step="0.01" @bind="materia.Preco_compra" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Peso (g)</label>
+                <input class="form-control" type="number" step="0.01" @bind="materia.Peso_compra" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Fornecedor</label>
+                <select class="form-select" @bind="fornecedorId">
+                    @foreach (var f in fornecedores)
+                    {
+                        <option value="@f.Id">@f.Nome</option>
+                    }
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(mensagemErro))
+            {
+                <p class="text-danger">@mensagemErro</p>
+            }
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Materia prima não encontrada.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private MateriaPrima? materia;
+    private List<Fornecedor> fornecedores = new();
+    private int fornecedorId;
+    private string? mensagemErro;
+
+    protected override void OnParametersSet()
+    {
+        materia = RepositorioTechToys.ListarTodos<MateriaPrima>()?.FirstOrDefault(m => m.Id == Id);
+        fornecedores = RepositorioTechToys.ListarTodos<Fornecedor>() ?? new List<Fornecedor>();
+        fornecedorId = materia?.Fornecedor?.Id ?? 0;
+    }
+
+    private void Salvar()
+    {
+        if (materia == null) return;
+        if (fornecedorId <= 0)
+        {
+            mensagemErro = "Selecione um fornecedor válido.";
+            return;
+        }
+
+        materia.Fornecedor = fornecedores.FirstOrDefault(f => f.Id == fornecedorId);
+        if (materia.Fornecedor == null)
+        {
+            mensagemErro = "Fornecedor selecionado não encontrado.";
+            return;
+        }
+
+        mensagemErro = null;
+        RepositorioTechToys.Atualizar(materia);
+        NavigationManager.NavigateTo("/materias-primas/visualizar");
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

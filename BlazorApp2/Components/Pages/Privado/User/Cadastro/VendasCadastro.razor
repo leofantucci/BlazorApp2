@@ -1,0 +1,236 @@
+﻿@page "/vendas/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Vendas - Cadastro</PageTitle>
+
+<!-- ESTILO ADICIONADO AQUI PARA CORRIGIR O INPUT -->
+<style>
+    .input-quantidade {
+        min-width: 110px; /* Garante um espaço confortável para o número */
+        width: 100%;
+        text-align: center;
+        font-weight: bold;
+        font-size: 18px;
+        -moz-appearance: textfield; /* Remove setinha no Firefox */
+        appearance: textfield;
+    }
+
+    /* Remove as setinhas no Chrome, Edge e Safari */
+    .input-quantidade::-webkit-outer-spin-button,
+    .input-quantidade::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Vendas - Cadastro</p></div>
+
+    @if (!string.IsNullOrEmpty(mensagem))
+    {
+        <div class="alert @(operacaoSucesso ? "alert-success" : "alert-danger")" role="alert">@mensagem</div>
+    }
+
+    <div class="blueprint blueprint-2 formulario-card">
+        <label class="texto-padrao-1">Cliente</label>
+        <select class="entrada" @bind="idCliente">
+            <option value="0">Selecione um cliente...</option>
+            @foreach (var c in clientes)
+            {
+                <option value="@c.Id">@c.Id - @c.Nome</option>
+            }
+        </select>
+
+        <!-- ÁREA 1: PRODUTOS -->
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2 w-100">
+            <span class="texto-padrao-1">Produtos da Venda</span>
+            <button type="button" class="btn btn-sm btn-primary" @onclick="AdicionarProduto">
+                + Adicionar Produto
+            </button>
+        </div>
+
+        <table class="table table-bordered align-middle w-100">
+            <thead>
+                <tr>
+                    <th style="width: 60%;">Produto</th>
+                    <th style="width: 20%;">Quantidade</th>
+                    <th style="width: 20%;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (itensProdutos.Count == 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Nenhum produto adicionado. Clique em "+ Adicionar Produto".</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in itensProdutos)
+                    {
+                        <tr>
+                            <td>
+                                <select class="entrada form-select" @bind="item.ItemId">
+                                    <option value="0">Selecione um produto...</option>
+                                    @foreach (var p in produtos)
+                                    {
+                                        <option value="@p.Id">@p.Id - @p.Nome (Estoque: @(RepositorioTechToys.ObterQuantidadeEstoque<Produto>(p.Id)) | R$ @p.Valor_Venda.ToString("F2"))</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <!-- CLASSE input-quantidade ADICIONADA AQUI -->
+                                <input class="entrada form-control input-quantidade" type="number" min="1" @bind="item.Quantidade" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoverProduto(item)">Remover</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+
+        <!-- ÁREA 2: EMBALAGENS -->
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2 w-100">
+            <span class="texto-padrao-1">Embalagens da Venda (Opcional)</span>
+            <button type="button" class="btn btn-sm btn-secondary" @onclick="AdicionarEmbalagem">
+                + Adicionar Embalagem
+            </button>
+        </div>
+
+        <table class="table table-bordered align-middle w-100">
+            <thead>
+                <tr>
+                    <th style="width: 60%;">Embalagem</th>
+                    <th style="width: 20%;">Quantidade</th>
+                    <th style="width: 20%;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (itensEmbalagens.Count == 0)
+                {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Nenhuma embalagem adicionada.</td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var emb in itensEmbalagens)
+                    {
+                        <tr>
+                            <td>
+                                <select class="entrada form-select" @bind="emb.ItemId">
+                                    <option value="0">Selecione uma embalagem...</option>
+                                    @foreach (var e in embalagens)
+                                    {
+                                        <option value="@e.Id">@e.Id - @e.Nome (Estoque: @(RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(e.Id)) | R$ @e.Preco.ToString("F2"))</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <!-- CLASSE input-quantidade ADICIONADA AQUI TAMBÉM -->
+                                <input class="entrada form-control input-quantidade" type="number" min="1" @bind="emb.Quantidade" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoverEmbalagem(emb)">Remover</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private int idCliente;
+    private List<Cliente> clientes = new();
+    private List<Produto> produtos = new();
+    private List<Embalagem> embalagens = new();
+
+    private List<ItemQuantidadeInput> itensProdutos = new();
+    private List<ItemQuantidadeInput> itensEmbalagens = new();
+
+    private string mensagem = string.Empty;
+    private bool operacaoSucesso;
+
+    protected override void OnInitialized()
+    {
+        CarregarListas();
+        AdicionarProduto();
+    }
+
+    private void CarregarListas()
+    {
+        clientes = RepositorioTechToys.ListarTodos<Cliente>() ?? new();
+        produtos = (RepositorioTechToys.ListarTodos<Produto>() ?? new()).Where(p => p.Ativo).ToList();
+        embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+    }
+
+    private void AdicionarProduto() => itensProdutos.Add(new ItemQuantidadeInput { ItemId = 0, Quantidade = 1 });
+    private void RemoverProduto(ItemQuantidadeInput item) => itensProdutos.Remove(item);
+
+    private void AdicionarEmbalagem() => itensEmbalagens.Add(new ItemQuantidadeInput { ItemId = 0, Quantidade = 1 });
+    private void RemoverEmbalagem(ItemQuantidadeInput item) => itensEmbalagens.Remove(item);
+
+    private void Salvar()
+    {
+        mensagem = string.Empty;
+        operacaoSucesso = false;
+
+        if (idCliente <= 0)
+        {
+            mensagem = "Selecione um cliente.";
+            return;
+        }
+
+        if (itensProdutos.Count == 0 || itensProdutos.Any(p => p.ItemId <= 0 || p.Quantidade <= 0))
+        {
+            mensagem = "Adicione pelo menos um produto válido com quantidade maior que zero.";
+            return;
+        }
+
+        if (itensEmbalagens.Any(e => e.ItemId <= 0 || e.Quantidade <= 0))
+        {
+            mensagem = "Preencha corretamente todas as embalagens adicionadas ou remova as linhas vazias.";
+            return;
+        }
+
+        try
+        {
+            RepositorioTechToys.CadastrarVendaSobDemanda(idCliente, itensProdutos, itensEmbalagens, DateTime.UtcNow);
+
+            operacaoSucesso = true;
+            mensagem = "Venda cadastrada e estoque atualizado com sucesso.";
+            idCliente = 0;
+            itensProdutos.Clear();
+            itensEmbalagens.Clear();
+            AdicionarProduto();
+            CarregarListas();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao cadastrar venda: {ex}");
+            mensagem = ex is InvalidOperationException or ArgumentException
+                ? ex.Message
+                : "Não foi possível cadastrar a venda. Verifique os dados e tente novamente.";
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

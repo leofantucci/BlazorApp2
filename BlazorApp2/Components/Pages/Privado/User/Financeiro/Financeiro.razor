@@ -1,0 +1,94 @@
+@page "/financeiro"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using Microsoft.AspNetCore.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Financeiro</PageTitle>
+
+<h1 class="faixaNinja">Financeiro</h1>
+
+<div class="sera">
+    <div class="container-personalizado-2">
+
+        <!-- Visão Geral -->
+        <AuthorizeView Roles="admin, gerente, funcionario">
+            <div class="card-personalizado-2">
+                <a href="/financeiro/dashboard"><img class="foto-2" src="Media/dashboard.webp" alt="Icone-Dashboard"/></a>
+                <a class="texto-padrao-1" href="/financeiro/dashboard">Visão Geral</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Produtos & Custos -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/financeiro/produtos"><img class="foto-2" src="Media/produto.webp" alt="Icone-Produtos"/></a>
+                <a class="texto-padrao-1" href="/financeiro/produtos">Produtos & Custos</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Matéria-Prima -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/materias-primas/visualizar"><img class="foto-2" src="Media/materiaprima.webp" alt="Icone-MateriaPrima"/></a>
+                <a class="texto-padrao-1" href="/materias-primas/visualizar">Matéria-Prima / Estoque</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Impressoras -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/impressoras/visualizar"><img class="foto-2" src="Media/impressora.webp" alt="Icone-Impressora"/></a>
+                <a class="texto-padrao-1" href="/impressoras/visualizar">Impressoras / Equipamentos</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Embalagens -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/embalagens/visualizar"><img class="foto-2" src="Media/embalagens.webp" alt="Icone-Embalagem"/></a>
+                <a class="texto-padrao-1" href="/embalagens/visualizar">Embalagens / Estoque</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Calculadora de Produção -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/calculadora-producao"><img class="foto-2" src="Media/dashboard.webp" alt="Calculadora de Produção"/></a>
+                <a class="texto-padrao-1" href="/calculadora-producao">Calculadora de Produção</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Vendas -->
+        <AuthorizeView Roles="admin, gerente, funcionario">
+            <div class="card-personalizado-2">
+                <a href="/financeiro/vendas"><img class="foto-2" src="Media/vendas.webp" alt="Icone-Vendas"/></a>
+                <a class="texto-padrao-1" href="/financeiro/vendas">Vendas</a>
+            </div>
+        </AuthorizeView>
+
+        <!-- Relatórios -->
+        <AuthorizeView Roles="admin, gerente">
+            <div class="card-personalizado-2">
+                <a href="/financeiro/relatorios"><img class="foto-2" src="Media/relatorios.webp" alt="Icone-Relatorios"/></a>
+                <a class="texto-padrao-1" href="/financeiro/relatorios">Relatórios</a>
+            </div>
+        </AuthorizeView>
+
+    </div>
+
+    <div class="area-botoes">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

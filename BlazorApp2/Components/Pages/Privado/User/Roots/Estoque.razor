@@ -1,0 +1,200 @@
+@page "/estoque"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin,gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+
+<PageTitle>Alterar Estoque</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Alterar Estoque</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert @(sucesso ? "alert-success" : "alert-danger")" role="alert">
+            @mensagem
+        </div>
+    }
+
+    <div class="blueprint blueprint-2">
+        <p class="texto-padrao-1">Tipo de item</p>
+        <select class="entrada" value="@tipoItem" @onchange="AlterarTipoItem">
+            <option value="Produto">Produto</option>
+            <option value="Peca">Peça</option>
+            <option value="MateriaPrima">Matéria-prima</option>
+            <option value="Embalagem">Embalagem</option>
+        </select>
+
+        <p class="texto-padrao-1">Buscar item</p>
+        <input class="entrada" type="search" @bind="buscaItem" placeholder="Digite o nome ou ID do item..." />
+
+        <p class="texto-padrao-1">Selecione o item</p>
+        <select class="entrada" @bind="idItem" disabled="@(!ItensDisponiveis)">
+            <option value="0">@(ItensDisponiveis ? "Selecione um item..." : "Nenhum item encontrado")</option>
+            @if (tipoItem == "Produto")
+            {
+                @foreach (var item in produtos.Where(x => CorrespondeBusca(x.Id, x.Nome)))
+                {
+                    <option value="@item.Id">#@item.Id - @item.Nome (Estoque: @estoquesProdutos.GetValueOrDefault(item.Id) @item.Unidade_Medida)</option>
+                }
+            }
+            else if (tipoItem == "Peca")
+            {
+                @foreach (var item in pecas.Where(x => CorrespondeBusca(x.Id, x.Nome)))
+                {
+                    <option value="@item.Id">#@item.Id - @item.Nome (Estoque: @estoquesPecas.GetValueOrDefault(item.Id) @item.Unidade_Medida)</option>
+                }
+            }
+            else if (tipoItem == "MateriaPrima")
+            {
+                @foreach (var item in materiasPrimas.Where(x => CorrespondeBusca(x.Id, x.Nome)))
+                {
+                    <option value="@item.Id">#@item.Id - @item.Nome (Estoque: @estoquesMaterias.GetValueOrDefault(item.Id) @item.Unidade_Medida)</option>
+                }
+            }
+            else if (tipoItem == "Embalagem")
+            {
+                @foreach (var item in embalagens.Where(x => CorrespondeBusca(x.Id, x.Nome)))
+                {
+                    <option value="@item.Id">#@item.Id - @item.Nome (Estoque: @estoquesEmbalagens.GetValueOrDefault(item.Id) @item.Unidade_Medida)</option>
+                }
+            }
+        </select>
+        <small class="text-muted">A lista mostra o ID, o nome e o saldo atual para facilitar a identificação.</small>
+
+        <p class="texto-padrao-1">Quantidade</p>
+        <input class="entrada" type="number" min="1" step="1" @bind="quantidade" />
+
+        <p class="texto-padrao-1">Operação</p>
+        <select class="entrada" @bind="operacao">
+            <option value="entrada">Adicionar ao estoque</option>
+            <option value="saida">Remover do estoque</option>
+        </select>
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Alterar">
+        Confirmar movimentação
+    </button>
+</div>
+
+@code {
+    private string tipoItem = "Produto";
+    private string operacao = "entrada";
+    private int idItem;
+    private int quantidade;
+    private string mensagem = string.Empty;
+    private bool sucesso;
+    private string buscaItem = string.Empty;
+    private List<Produto> produtos = new();
+    private List<Peca> pecas = new();
+    private List<MateriaPrima> materiasPrimas = new();
+    private List<Embalagem> embalagens = new();
+    private Dictionary<int, decimal> estoquesProdutos = new();
+    private Dictionary<int, decimal> estoquesPecas = new();
+    private Dictionary<int, decimal> estoquesMaterias = new();
+    private Dictionary<int, decimal> estoquesEmbalagens = new();
+
+    private bool ItensDisponiveis => tipoItem switch
+    {
+        "Produto" => produtos.Any(x => CorrespondeBusca(x.Id, x.Nome)),
+        "Peca" => pecas.Any(x => CorrespondeBusca(x.Id, x.Nome)),
+        "MateriaPrima" => materiasPrimas.Any(x => CorrespondeBusca(x.Id, x.Nome)),
+        "Embalagem" => embalagens.Any(x => CorrespondeBusca(x.Id, x.Nome)),
+        _ => false
+    };
+
+    protected override void OnInitialized()
+    {
+        produtos = RepositorioTechToys.ListarTodos<Produto>() ?? new();
+        pecas = RepositorioTechToys.ListarTodos<Peca>() ?? new();
+        materiasPrimas = RepositorioTechToys.ListarTodos<MateriaPrima>() ?? new();
+        embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+
+        foreach (var item in produtos) estoquesProdutos[item.Id] = RepositorioTechToys.ObterQuantidadeEstoque<Produto>(item.Id);
+        foreach (var item in pecas) estoquesPecas[item.Id] = RepositorioTechToys.ObterQuantidadeEstoque<Peca>(item.Id);
+        foreach (var item in materiasPrimas) estoquesMaterias[item.Id] = RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(item.Id);
+        foreach (var item in embalagens) estoquesEmbalagens[item.Id] = RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(item.Id);
+    }
+
+    private bool CorrespondeBusca(int id, string nome) =>
+        string.IsNullOrWhiteSpace(buscaItem) || id.ToString().Contains(buscaItem.Trim(), StringComparison.OrdinalIgnoreCase) ||
+        nome.Contains(buscaItem.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    private void AlterarTipoItem(ChangeEventArgs e)
+    {
+        tipoItem = e.Value?.ToString() ?? "Produto";
+        idItem = 0;
+        buscaItem = string.Empty;
+        mensagem = string.Empty;
+    }
+
+    private void AtualizarSaldoSelecionado()
+    {
+        // O saldo é recarregado após a movimentação para manter a lista atualizada.
+        // idItem ainda contém o item movimentado neste ponto.
+        switch (tipoItem)
+        {
+            case "Produto": estoquesProdutos[idItem] = RepositorioTechToys.ObterQuantidadeEstoque<Produto>(idItem); break;
+            case "Peca": estoquesPecas[idItem] = RepositorioTechToys.ObterQuantidadeEstoque<Peca>(idItem); break;
+            case "MateriaPrima": estoquesMaterias[idItem] = RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(idItem); break;
+            case "Embalagem": estoquesEmbalagens[idItem] = RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(idItem); break;
+        }
+    }
+
+    private void Alterar()
+    {
+        mensagem = string.Empty;
+        sucesso = false;
+
+        if (idItem <= 0)
+        {
+            mensagem = "Selecione um item da lista antes de confirmar a movimentação.";
+            return;
+        }
+        if (quantidade <= 0)
+        {
+            mensagem = "Informe uma quantidade maior que zero.";
+            return;
+        }
+
+        bool adicionar = operacao == "entrada";
+        bool resultado;
+
+        switch (tipoItem)
+        {
+            case "Produto":
+                resultado = RepositorioTechToys.AjustarEstoque<Produto>(
+                    idItem, quantidade, adicionar, out mensagem);
+                break;
+
+            case "Peca":
+                resultado = RepositorioTechToys.AjustarEstoque<Peca>(idItem, quantidade, adicionar, out mensagem);
+                break;
+
+            case "MateriaPrima":
+                resultado = RepositorioTechToys.AjustarEstoque<MateriaPrima>(
+                    idItem, quantidade, adicionar, out mensagem);
+                break;
+
+            case "Embalagem":
+                resultado = RepositorioTechToys.AjustarEstoque<Embalagem>(
+                    idItem, quantidade, adicionar, out mensagem);
+                break;
+
+            default:
+                mensagem = "Selecione um tipo de item válido.";
+                return;
+        }
+
+        sucesso = resultado;
+
+        if (sucesso)
+        {
+            AtualizarSaldoSelecionado();
+            idItem = 0;
+            quantidade = 0;
+        }
+    }
+}

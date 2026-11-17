@@ -1,0 +1,130 @@
+﻿@page "/embalagens/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Embalagens - Cadastro</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Embalagens - Cadastro</p></div>
+
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2 formulario-card">
+        <p class="texto-padrao-1">Insira o NOME da embalagem</p><br/>
+        <input class="entrada" placeholder="Caixa grande" @bind="nome" /><br/>
+
+        <p class="texto-padrao-1">Insira o TIPO de embalagem</p><br/>
+        <input class="entrada" placeholder="Caixa/Sacola" @bind="tipo" /><br/>
+
+        <div class="dimensoes">
+            <div>
+                <a class="texto-padrao-1">Insira a LARGURA do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="135" @bind="largura"/><br/>
+            </div>
+            <div>
+                <a class="texto-padrao-1">Insira o COMPRIMENTO do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="175" @bind="comprimento"/><br/>
+            </div>
+            <div>
+                <a class="texto-padrao-1">Insira a ALTURA do produto (mm)</a><br/>
+                <input class="entrada" type="number" step="any" placeholder="200" @bind="altura"/><br/>
+            </div>
+        </div>
+
+        <a class="texto-padrao-1">Insira o CUSTO de compra da embalagem (R$)</a><br/>
+        <input class="entrada" type="number" step="0.01" placeholder="0.70" @bind="preco" /><br/>
+
+        <a class="texto-padrao-1">Insira o ESTOQUE inicial da embalagem (UN)</a><br/>
+        <input class="entrada" type="number" placeholder="5" @bind="estoque" /><br/>
+
+        <label class="texto-padrao-1">Selecione o FORNECEDOR da embalagem</label><br/>
+        <select class="entrada" @bind="idFornecedor">
+            <option value="0">Selecione um fornecedor...</option>
+            @foreach (var f in fornecedores)
+            {
+                <option value="@f.Id">@f.Id - @f.Nome</option>
+            }
+        </select><br/>
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private string tipo = string.Empty;
+    private double largura, comprimento, altura, preco;
+    private int estoque;
+    private int idFornecedor;
+    private List<Fornecedor> fornecedores = new();
+
+    private string mensagemErro = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        fornecedores = RepositorioTechToys.ListarTodos<Fornecedor>() ?? new();
+    }
+
+    private void Salvar()
+    {
+        mensagemErro = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            mensagemErro = "Por favor, preencha o Nome da embalagem.";
+            return;
+        }
+
+        if (idFornecedor <= 0)
+        {
+            mensagemErro = "Por favor, selecione um fornecedor válido.";
+            return;
+        }
+
+        if (estoque < 0)
+        {
+            mensagemErro = "O estoque não pode ser negativo.";
+            return;
+        }
+
+        try
+        {
+            Fornecedor? fornecedor = fornecedores.FirstOrDefault(f => f.Id == idFornecedor)
+                ?? RepositorioTechToys.ObterPorId<Fornecedor>(idFornecedor);
+
+            if (fornecedor == null)
+            {
+                mensagemErro = "O fornecedor selecionado não foi encontrado.";
+                return;
+            }
+
+            RepositorioTechToys.CadastrarEmbalagem(nome, tipo, largura, comprimento, altura, preco, fornecedor, estoque);
+
+            NavigationManager.NavigateTo("/embalagens/visualizar");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERRO CADASTRO]: {ex}");
+            mensagemErro = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar a embalagem. Consulte os registros do servidor.";
+            StateHasChanged();
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

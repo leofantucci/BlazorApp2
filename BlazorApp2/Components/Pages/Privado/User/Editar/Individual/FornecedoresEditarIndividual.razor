@@ -1,0 +1,63 @@
+﻿@page "/fornecedores/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Fornecedores - Editar Fornecedor</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Fornecedor</p></div>
+
+    @if (fornecedor != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="fornecedor.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" @bind="fornecedor.Email" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Telefone</label>
+                <input class="form-control" @bind="fornecedor.Telefone" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Site</label>
+                <input class="form-control" @bind="fornecedor.Site" />
+            </div>
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Fornecedor não encontrado.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Fornecedor? fornecedor;
+
+    protected override void OnParametersSet()
+    {
+        fornecedor = RepositorioTechToys.ListarTodos<Fornecedor>()?.FirstOrDefault(f => f.Id == Id);
+    }
+
+    private void Salvar()
+    {
+        if (fornecedor == null) return;
+        RepositorioTechToys.Atualizar(fornecedor); // ajuste conforme o método real
+        NavigationManager.NavigateTo("/fornecedores/visualizar");
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

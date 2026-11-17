@@ -1,0 +1,30 @@
+@page "/acesso-negado"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@inject IJSRuntime JS
+
+<PageTitle>Acesso Negado - Infinity Soluções - Gestão</PageTitle>
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 70vh;">
+    <div class="text-center p-5 card shadow-sm" style="max-width: 480px;">
+        <h1 class="display-1 text-danger fw-bold">403</h1>
+        <h3 class="mb-3">Acesso Negado</h3>
+        <p class="text-muted mb-4">
+            Você não tem permissão para visualizar esta página ou recurso.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-primary" @onclick="Voltar">Voltar ao Início</button>
+            <form method="post" action="/api/auth/logout">
+                <AntiforgeryToken />
+                <button type="submit" class="btn btn-outline-danger">Trocar de Conta</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}

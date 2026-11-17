@@ -1,0 +1,353 @@
+@page "/placas/qr"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Components.Authorization
+@using BlazorApp2.Security
+@using TechToysDominio
+@using QRCodeEntidade = TechToysDominio.QRCode
+@using Repositorio
+@using System.Security.Cryptography
+@using System.Text
+@inject IDbContextFactory<MyDBContext> DbFactory
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Placas NFC - QR Code</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Placas NFC - QR Code Dinâmico</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert @(sucesso ? "alert-success" : "alert-danger") mt-3">@mensagem</div>
+    }
+
+    <div class="card shadow-sm p-3 mt-3 text-start">
+        <h5>Gerar novo QR Code</h5>
+        <p class="text-muted">O QR Code será permanente. O proprietário poderá alterar o destino depois da ativação.</p>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-7">
+                <label class="form-label" for="nomeQr">Nome / identificação</label>
+                <input id="nomeQr" class="form-control" maxlength="100" @bind="nomeNovo" placeholder="Ex.: Placa da recepção" />
+            </div>
+            <div class="col-md-5">
+                <button class="btn btn-primary w-100" @onclick="CriarQRCode" disabled="@carregando">
+                    Gerar QR Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(codigoAtivacaoGerado))
+    {
+        <div class="alert alert-warning mt-3 text-start">
+            <h5>QR Code criado! Guarde o código de ativação.</h5>
+            <p>Entregue-o ao proprietário junto com a placa. Administradores podem consultá-lo depois pelo botão "Ver código".</p>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="d-flex flex-column align-items-center gap-2">
+                    <img src="@imagemQrGerado" alt="QR Code gerado" style="width:180px;height:180px;background:white;padding:8px;border:1px solid #ddd;" />
+                    <a class="btn btn-success btn-sm" href="@ObterSvgQrUrl(urlQrGerado)" download="qrcode-novo.svg">
+                        <i class="bi bi-filetype-svg me-1"></i> Baixar SVG
+                    </a>
+                </div>
+                <div>
+                    <div><strong>Código de ativação:</strong></div>
+                    <div class="fs-4 fw-bold" style="letter-spacing:2px">@codigoAtivacaoGerado</div>
+                    <div class="mt-2"><strong>Endereço público:</strong></div>
+                    <a href="@urlQrGerado" target="_blank">@urlQrGerado</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <h5 class="mt-4">QR Codes cadastrados</h5>
+    @if (carregando)
+    {
+        <p>Carregando QR Codes...</p>
+    }
+    else if (lista.Count == 0)
+    {
+        <p class="text-muted">Nenhum QR Code cadastrado.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered align-middle mt-2">
+                <thead class="table-dark">
+                    <tr>
+                        <th>QR Code</th>
+                        <th>Nome</th>
+                        <th>Status</th>
+                        <th>Acessos</th>
+                        <th>Último acesso</th>
+                        <th>Gerenciar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in lista)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex flex-column align-items-center gap-2">
+                                    <img src="@ObterImagemQr(item.CodigoPublico)" alt="QR Code" style="width:90px;height:90px;background:white;padding:4px;" />
+                                    <a class="btn btn-sm btn-outline-success" href="@ObterSvgQrUrl(ObterUrlQr(item.CodigoPublico))" download="@($"qrcode-{item.CodigoPublico[..8]}.svg")">
+                                        Baixar SVG
+                                    </a>
+                                </div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Nome) ? "Sem nome" : item.Nome)</td>
+                            <td><span class="badge @ClasseStatus(item.Status)">@item.Status</span></td>
+                            <td>@item.TotalAcessos</td>
+                            <td>@(item.UltimoAcessoUtc?.ToLocalTime().ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary mb-1" href="@($"/placas/qr/{item.CodigoPublico}/editar")">Editar</a>
+                                <a class="btn btn-sm btn-outline-secondary mb-1" href="@($"/placas/qr/{item.CodigoPublico}")" target="_blank">Abrir</a>
+                                <AuthorizeView Roles="admin">
+                                    <button type="button" class="btn btn-sm btn-outline-dark mb-1" @onclick="() => VerCodigo(item)">Ver código</button>
+                                </AuthorizeView>
+                                <AuthorizeView Roles="admin, gerente">
+                                    <button type="button" class="btn btn-sm btn-danger mb-1" @onclick="() => PerguntarExclusao(item)">Excluir</button>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="mt-3">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@if (itemExcluir != null)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar exclusão</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir o QR Code <strong>@(string.IsNullOrWhiteSpace(itemExcluir.Nome) ? itemExcluir.CodigoPublico : itemExcluir.Nome)</strong>?</p>
+                    <p class="text-danger">Essa ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelarExclusao">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="ConfirmarExclusao">Sim, excluir</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (itemCodigo != null)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Código de ativação</h5>
+                </div>
+                <div class="modal-body">
+                    @if (itemCodigo.Status == StatusQRCode.Pendente && !string.IsNullOrWhiteSpace(itemCodigo.CodigoAtivacao))
+                    {
+                        <p>Entregue este código ao proprietário junto com a placa.</p>
+                        <div class="fs-4 fw-bold" style="letter-spacing:2px">@itemCodigo.CodigoAtivacao</div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Este QR Code já foi ativado ou o código não está mais disponível.</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="FecharCodigo">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<QRCodeEntidade> lista = new();
+    private bool carregando = true;
+    private string nomeNovo = string.Empty;
+    private string mensagem = string.Empty;
+    private bool sucesso = true;
+    private string codigoAtivacaoGerado = string.Empty;
+    private string imagemQrGerado = string.Empty;
+    private string urlQrGerado = string.Empty;
+    private QRCodeEntidade? itemExcluir;
+    private QRCodeEntidade? itemCodigo;
+
+    protected override async Task OnInitializedAsync() => await CarregarDados();
+
+    private async Task CarregarDados()
+    {
+        carregando = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            lista = await db.QRCode.AsNoTracking().OrderByDescending(x => x.DataCriacaoUtc).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao carregar QR Codes: {ex}");
+            mensagem = "Não foi possível carregar os QR Codes. Consulte os registros do servidor.";
+            sucesso = false;
+        }
+        finally { carregando = false; }
+    }
+
+    private async Task CriarQRCode()
+    {
+        mensagem = string.Empty;
+        codigoAtivacaoGerado = string.Empty;
+        try
+        {
+            var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(24))
+                .Replace("+", "-").Replace("/", "_").TrimEnd('=');
+            var codigoAtivacao = Convert.ToHexString(RandomNumberGenerator.GetBytes(5))
+                .ToUpperInvariant();
+            var novo = new QRCodeEntidade
+            {
+                CodigoPublico = token,
+                Nome = string.IsNullOrWhiteSpace(nomeNovo) ? null : nomeNovo.Trim(),
+                Status = StatusQRCode.Pendente,
+                DataCriacaoUtc = DateTime.UtcNow
+            };
+            novo.CodigoAtivacao = codigoAtivacao;
+            novo.CodigoAtivacaoHash = new PasswordHasher<QRCodeEntidade>()
+                .HashPassword(novo, codigoAtivacao);
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            db.QRCode.Add(novo);
+            await db.SaveChangesAsync();
+
+            codigoAtivacaoGerado = codigoAtivacao;
+            urlQrGerado = new Uri(new Uri(Navigation.BaseUri), $"placas/qr/{token}").ToString();
+            imagemQrGerado = ObterImagemQrUrl(urlQrGerado);
+            nomeNovo = string.Empty;
+            mensagem = "QR Code criado com sucesso.";
+            sucesso = true;
+            await CarregarDados();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao criar QR Code: {ex}");
+            mensagem = "Erro ao criar QR Code. Consulte os registros do servidor.";
+            sucesso = false;
+        }
+    }
+
+    private string ObterUrlQr(string codigo)
+    {
+        return new Uri(new Uri(Navigation.BaseUri), $"placas/qr/{codigo}").ToString();
+    }
+
+    private string ObterImagemQr(string codigo) => ObterImagemQrUrl(ObterUrlQr(codigo));
+
+    private static string ObterImagemQrUrl(string url)
+    {
+        using var gerador = new QRCoder.QRCodeGenerator();
+        var dados = gerador.CreateQrCode(url, QRCoder.QRCodeGenerator.ECCLevel.Q);
+        var png = new QRCoder.PngByteQRCode(dados).GetGraphic(8);
+        return "data:image/png;base64," + Convert.ToBase64String(png);
+    }
+
+    private static string ObterSvgQrUrl(string url)
+    {
+        using var gerador = new QRCoder.QRCodeGenerator();
+        using var dados = gerador.CreateQrCode(url, QRCoder.QRCodeGenerator.ECCLevel.Q);
+
+        var matriz = dados.ModuleMatrix;
+        var tamanho = matriz.Count;
+        const int margem = 4;
+        var tamanhoTotal = tamanho + (margem * 2);
+        var caminho = new StringBuilder();
+
+        // Cada sequência horizontal de módulos escuros vira um retângulo vetorial.
+        // Isso evita rastreamento de pixels e mantém todos os módulos perfeitamente quadrados.
+        for (var y = 0; y < tamanho; y++)
+        {
+            var x = 0;
+            while (x < tamanho)
+            {
+                if (!matriz[y][x])
+                {
+                    x++;
+                    continue;
+                }
+
+                var inicio = x;
+                while (x < tamanho && matriz[y][x]) x++;
+                var largura = x - inicio;
+                caminho.Append($"M{inicio + margem} {y + margem}h{largura}v1h-{largura}z");
+            }
+        }
+
+        var svg = $"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {tamanhoTotal} {tamanhoTotal}\" shape-rendering=\"crispEdges\"><path fill=\"#000000\" d=\"{caminho}\"/></svg>";
+        return "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(svg));
+    }
+
+    private void Voltar() => Navigation.NavigateTo("/placas");
+
+    private void PerguntarExclusao(QRCodeEntidade item) => itemExcluir = item;
+
+    private void CancelarExclusao() => itemExcluir = null;
+
+    private async Task ConfirmarExclusao()
+    {
+        if (itemExcluir is null) return;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var qr = await db.QRCode.FirstOrDefaultAsync(x => x.Id == itemExcluir.Id);
+            if (qr is not null)
+            {
+                db.QRCode.Remove(qr);
+                await db.SaveChangesAsync();
+            }
+            itemExcluir = null;
+            mensagem = "QR Code excluído com sucesso.";
+            sucesso = true;
+            await CarregarDados();
+        }
+        catch (Exception ex)
+        {
+            itemExcluir = null;
+            Console.WriteLine($"Falha ao excluir QR Code: {ex}");
+            mensagem = "Erro ao excluir QR Code. Consulte os registros do servidor.";
+            sucesso = false;
+        }
+    }
+
+    private async Task VerCodigo(QRCodeEntidade item)
+    {
+        // Defesa em profundidade: a página aceita admin e gerente, mas o código de
+        // ativação só pode ser revelado a administradores, mesmo via evento forjado.
+        var autenticacao = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        if (!QrCodeAccessPolicy.PodeVerCodigoAtivacao(autenticacao.User))
+        {
+            mensagem = "Apenas administradores podem visualizar o código de ativação.";
+            sucesso = false;
+            return;
+        }
+
+        itemCodigo = item;
+    }
+
+    private void FecharCodigo() => itemCodigo = null;
+
+    private static string ClasseStatus(StatusQRCode status) => status switch
+    {
+        StatusQRCode.Ativo => "bg-success",
+        StatusQRCode.Pendente => "bg-warning text-dark",
+        StatusQRCode.Bloqueado => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

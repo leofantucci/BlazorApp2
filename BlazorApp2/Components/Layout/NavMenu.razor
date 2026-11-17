@@ -1,0 +1,121 @@
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid d-flex justify-content-center align-items-center">
+        <img class="navbar-brand navbar-texto-1 logo-topo"
+             src="Media/InfinityIcon.webp"
+             alt="Logo" />
+
+        <label class="navbar-toggler d-md-none posicao-toggle-mobile"
+               for="navbar-toggle-checkbox">
+            <span class="navbar-toggler-icon"></span>
+        </label>
+    </div>
+</div>
+
+<input type="checkbox"
+       id="navbar-toggle-checkbox"
+       class="navbar-toggler" />
+
+<div class="nav-scrollable">
+    <nav class="nav flex-column">
+
+        <AuthorizeView Roles="admin, gerente, funcionario">
+            <Authorized Context="usuarioAutenticado">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link menu-link" href="/inicio" Match="NavLinkMatch.All">
+                        <i class="bi bi-house-door-fill menu-icon"></i><span>Início</span>
+                    </NavLink>
+                </div>
+
+                <div class="nav-item px-3">
+                    <details class="nav-group">
+                        <summary class="nav-link menu-link menu-toggle">
+                            <i class="bi bi-lightning-charge-fill menu-icon"></i>
+                            <span>Atalhos</span>
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </summary>
+                        <div class="submenu">
+                            <AuthorizeView Roles="admin, gerente, funcionario" Context="permissaoVendas">
+                                <NavLink class="nav-link submenu-link" href="/vendas/cadastrar">
+                                    <i class="bi bi-cart-plus menu-icon"></i><span>Realizar Venda</span>
+                                </NavLink>
+                            </AuthorizeView>
+                            <NavLink class="nav-link submenu-link" href="/visao-geral">
+                                <i class="bi bi-bar-chart-line menu-icon"></i><span>Visão-Geral</span>
+                            </NavLink>
+                            <AuthorizeView Roles="admin, gerente, funcionario" Context="permissaoCadastro">
+                                <NavLink class="nav-link submenu-link" href="/clientes/cadastrar">
+                                    <i class="bi bi-person-plus menu-icon"></i><span>Cadastrar Cliente</span>
+                                </NavLink>
+                            </AuthorizeView>
+                            <NavLink class="nav-link submenu-link" href="/estoque/historico">
+                                <i class="bi bi-clock-history menu-icon"></i><span>Histórico de Estoque</span>
+                            </NavLink>
+                            <AuthorizeView Roles="admin, gerente" Context="permissaoEstoque">
+                                <NavLink class="nav-link submenu-link" href="/estoque/editar">
+                                    <i class="bi bi-box-seam menu-icon"></i><span>Alterar Estoque</span>
+                                </NavLink>
+                            </AuthorizeView>
+                            <AuthorizeView Roles="admin" Context="permissaoAdmin">
+                                <NavLink class="nav-link submenu-link" href="/visao-geral/limpar-banco">
+                                    <i class="bi bi-trash3 menu-icon"></i><span>Limpar Banco</span>
+                                </NavLink>
+                                <NavLink class="nav-link submenu-link" href="/usuarios/visualizar">
+                                    <i class="bi bi-people menu-icon"></i><span>Usuários</span>
+                                </NavLink>
+                                <NavLink class="nav-link submenu-link" href="/auditoria">
+                                    <i class="bi bi-shield-lock menu-icon"></i><span>Auditoria</span>
+                                </NavLink>
+                            </AuthorizeView>
+                        </div>
+                    </details>
+                </div>
+                
+                <AuthorizeView Roles="admin, gerente, funcionario" Context="permissaoPlacas">
+                    <div class="nav-item px-3">
+                        <details class="nav-group">
+                        <summary class="nav-link menu-link menu-toggle">
+                            <i class="bi bi-lightning-charge-fill menu-icon"></i>
+                            <span>Placas NFC</span>
+                            <i class="bi bi-chevron-down menu-arrow"></i>
+                        </summary>
+                        <div class="submenu">
+                            <NavLink class="nav-link submenu-link" href="/placas/">
+                                <i class="bi bi-cart-plus menu-icon"></i><span>Placas NFC</span>
+                            </NavLink>
+                            <NavLink class="nav-link submenu-link" href="/placas/qr">
+                                <i class="bi bi-qr-code menu-icon"></i><span>QR Code</span>
+                            </NavLink>
+                        </div>
+                        </details>
+                    </div>
+                </AuthorizeView>
+            </Authorized>
+        </AuthorizeView>
+
+        <AuthorizeView>
+            <Authorized Context="usuarioLogado">
+                <form method="post" action="/api/auth/logout" class="nav-item px-3">
+                    <AntiforgeryToken />
+                    <button type="submit" class="nav-link menu-link">
+                        <i class="bi bi-box-arrow-right menu-icon"></i><span>Sair</span>
+                    </button>
+                </form>
+                <div class="usuario-info">
+                    <div class="usuario-info-titulo">
+                        <i class="bi bi-person-circle"></i> Usuário conectado
+                    </div>
+                    <p>Usuário: <strong>@usuarioLogado.User.Identity?.Name</strong></p>
+                    <p>Papel: <strong>@usuarioLogado.User.FindFirst(
+                        System.Security.Claims.ClaimTypes.Role)?.Value</strong></p>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link menu-link" href="/" Match="NavLinkMatch.All">
+                        <i class="bi bi-box-arrow-in-right menu-icon"></i><span>Login</span>
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>

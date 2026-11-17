@@ -1,0 +1,61 @@
+﻿@page "/funcionarios/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Funcionários - Cadastro</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Funcionários - Cadastro</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2 formulario-card">
+        <label class="texto-padrao-1">Login do funcionário</label>
+        <input class="entrada" maxlength="100" autocomplete="off" @bind="login" />
+
+        <label class="texto-padrao-1">Senha (mínimo 10 caracteres)</label>
+        <input class="entrada" type="password" minlength="10" maxlength="1024"
+               autocomplete="new-password" @bind="senha" />
+    </div>
+
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string login = string.Empty;
+    private string senha = string.Empty;
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(senha))
+        {
+            mensagemErro = "Preencha o login e a senha do funcionário.";
+            return;
+        }
+
+        try
+        {
+            // O cargo é fixo: gerente não pode criar outro administrador ou gerente.
+            RepositorioTechToys.CadastrarUsuario(login.Trim(), senha, "funcionario");
+            NavigationManager.NavigateTo("/visao-geral");
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar o funcionário. Consulte os registros do servidor.";
+        }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("history.back");
+}

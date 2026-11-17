@@ -1,0 +1,171 @@
+﻿@page "/vendas/visualizar/{id:int}/mais-detalhes"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Venda @Id - Mais Detalhes</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria">
+        <p>Venda @Id - Mais Detalhes</p>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="spinner-border text-primary my-4" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    }
+    else if (venda != null)
+    {
+        <!-- Resumo Geral da Venda -->
+        <table class="table table-striped table-bordered mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Data/Hora</th>
+                    <th>Cliente - ID</th>
+                    <th>Cliente - Nome</th>
+                    <th>Valor Total Venda</th>
+                    <th>Custo Total</th>
+                    <th>Lucro Líq.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@venda.Id</td>
+                    <td>@venda.Data_Hora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@venda.Cliente?.Id</td>
+                    <td>@(venda.Cliente?.Nome ?? "Cliente não informado")</td>
+                    <td>R$ @venda.Calcular_Lucro_Bruto().ToString("F2")</td>
+                    <td>R$ @venda.Calcular_Gasto_Total().ToString("F2")</td>
+                    <td>R$ @venda.Calcular_Lucro_Liquido().ToString("F2")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Tabela Detalhada de Produtos -->
+        <h5 class="texto-padrao-1 mt-4">Produtos da Venda</h5>
+        <table class="table table-striped table-bordered mt-2">
+            <thead class="table-dark">
+                <tr>
+                    <th>Produto - ID</th>
+                    <th>Produto - Nome</th>
+                    <th>Qtd.</th>
+                    <th>Preço Unit. (R$)</th>
+                    <th>Custo Prod. Total (R$)</th>
+                    <th>Subtotal Venda (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (venda.ItensVenda != null && venda.ItensVenda.Count > 0)
+                {
+                    @foreach (var item in venda.ItensVenda)
+                    {
+                        <tr>
+                            <td>@item.ProdutoId</td>
+                            <td>@(item.Produto?.Nome ?? "Produto não informado")</td>
+                            <td>@item.Quantidade.ToString("F1")</td>
+                            <td>R$ @(item.Produto?.Valor_Venda.ToString("F2") ?? "0,00")</td>
+                            <td>R$ @item.Calcular_Custo_Producao().ToString("F2")</td>
+                            <td>R$ @item.Calcular_Subtotal().ToString("F2")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">Nenhum produto registrado nesta venda.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Tabela Detalhada de Embalagens -->
+        <h5 class="texto-padrao-1 mt-4">Embalagens da Venda</h5>
+        <table class="table table-striped table-bordered mt-2">
+            <thead class="table-dark">
+                <tr>
+                    <th>Embalagem - ID</th>
+                    <th>Embalagem - Nome</th>
+                    <th>Qtd.</th>
+                    <th>Custo Unit. (R$)</th>
+                    <th>Custo Total (R$)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (venda.EmbalagensVenda != null && venda.EmbalagensVenda.Count > 0)
+                {
+                    @foreach (var emb in venda.EmbalagensVenda)
+                    {
+                        <tr>
+                            <td>@emb.EmbalagemId</td>
+                            <td>@(emb.Embalagem?.Nome ?? "Embalagem não informada")</td>
+                            <td>@emb.Quantidade</td>
+                            <td>R$ @(emb.Embalagem?.Preco.ToString("F2") ?? "0,00")</td>
+                            <td>R$ @emb.Calcular_Custo().ToString("F2")</td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Nenhuma embalagem utilizada nesta venda.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="mt-3">
+            <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning mt-3">
+            Venda com ID <strong>@Id</strong> não encontrada.
+        </div>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    public Venda? venda;
+    private bool carregando = true;
+
+    protected override void OnInitialized()
+    {
+        CarregarDados();
+    }
+
+    private void CarregarDados()
+    {
+        try
+        {
+            carregando = true;
+            venda = RepositorioTechToys.ObterPorId<Venda>(Id);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar detalhes da venda: {ex.Message}");
+            venda = null;
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("history.back");
+    }
+}
