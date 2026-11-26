@@ -1,0 +1,250 @@
+@page "/placas/nfc/{CodigoPublico}/editar"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [AllowAnonymous]
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Identity
+@using TechToysDominio
+@using Repositorio
+@using BlazorApp2.Components.Placas
+@inject IDbContextFactory<MyDBContext> DbFactory
+@inject ILogger<PlacaNFCEditar> Logger
+
+<PageTitle>Painel da Placa NFC</PageTitle>
+
+<div class="centralizado pagina-formulario placa-nfc-config-page">
+    <div class="faixaNinja corSecundaria"><p>Painel da Placa NFC</p></div>
+
+    @if (carregando)
+    {
+        <p>Carregando...</p>
+    }
+    else if (registro is null)
+    {
+        <div class="alert alert-danger form-alert">Placa não encontrada.</div>
+        <div class="formulario-footer">
+            <a class="btn btn-secondary" href="/placas/nfc">Voltar</a>
+        </div>
+    }
+    else if (registro.Status == StatusPlacaNFC.Pendente)
+    {
+        <div class="alert alert-warning form-alert">
+            Esta placa ainda não foi ativada. Ative primeiro usando o código recebido com a placa.
+        </div>
+        <div class="formulario-footer">
+            <a class="btn btn-primary" href="@($"/placas/nfc/{CodigoPublico}")">Ir para ativação</a>
+        </div>
+    }
+    else if (registro.Status != StatusPlacaNFC.Ativo)
+    {
+        <div class="alert alert-warning form-alert">
+            Esta placa não está disponível para edição. Status: @registro.Status.
+        </div>
+        <div class="formulario-footer">
+            <a class="btn btn-secondary" href="@($"/placas/nfc/{CodigoPublico}")">Voltar para a página pública</a>
+        </div>
+    }
+    else if (!autenticado)
+    {
+        <div class="blueprint blueprint-2 formulario-card">
+            <div class="formulario-intro">
+                <h2>Acesso do proprietário</h2>
+                <p>Digite a senha definida durante a ativação para gerenciar os links desta placa.</p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(erroGeral))
+            {
+                <div class="alert alert-danger mt-3">@erroGeral</div>
+            }
+
+            <div class="formulario-secao">
+                <div class="form-field">
+                    <label class="form-label" for="senhaPainel">Senha da placa</label>
+                    <input id="senhaPainel" class="form-control" type="password" autocomplete="current-password" @bind="senhaLogin" />
+                </div>
+            </div>
+
+            <div class="formulario-footer">
+                <button type="button" class="btn btn-primary" @onclick="Entrar" disabled="@processando">
+                    @(processando ? "Validando..." : "Acessar painel")
+                </button>
+                <a class="btn btn-secondary" href="@($"/placas/nfc/{CodigoPublico}")">Ver página pública</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="blueprint blueprint-2 formulario-card">
+            <div class="formulario-intro">
+                <h2>@(string.IsNullOrWhiteSpace(registro.Nome) ? "Minha placa" : registro.Nome)</h2>
+                <p>Configure os cards que aparecerão quando alguém aproximar o celular da placa.</p>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(erroGeral))
+            {
+                <div class="alert alert-danger mt-3">@erroGeral</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(mensagem))
+            {
+                <div class="alert @(sucesso ? "alert-success" : "alert-danger") mt-3">@mensagem</div>
+            }
+
+            <PlacaNfcEditor Placa="registro"
+                            Autenticado="true"
+                            PermitirAlterarSenha="true"
+                            OnSalvo="AoSalvar" />
+        </div>
+
+        <div class="formulario-footer">
+            <a class="btn btn-primary" href="@($"/placas/nfc/{CodigoPublico}")">Ver página pública</a>
+            <button type="button" class="btn btn-secondary" @onclick="SairDoPainel">Sair do painel</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string CodigoPublico { get; set; } = string.Empty;
+
+    private PlacaNFC? registro;
+    private bool carregando = true;
+    private bool processando;
+    private bool autenticado;
+    private bool sucesso;
+    private string senhaLogin = string.Empty;
+    private string mensagem = string.Empty;
+    private string erroGeral = string.Empty;
+    private string? codigoCarregado;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        carregando = true;
+
+        // O mesmo circuito pode receber outro código público. A autenticação do
+        // proprietário vale somente para a placa em que a senha foi validada.
+        if (!string.Equals(codigoCarregado, CodigoPublico, StringComparison.Ordinal))
+        {
+            codigoCarregado = CodigoPublico;
+            autenticado = false;
+            senhaLogin = string.Empty;
+            mensagem = string.Empty;
+            erroGeral = string.Empty;
+        }
+
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            registro = await db.PlacaNFC
+                .AsNoTracking()
+                .Include(x => x.Cards)
+                .FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[PlacaNFC] Falha ao carregar painel da placa {Codigo}", CodigoPublico);
+            erroGeral = "Não foi possível carregar a placa no momento.";
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task Entrar()
+    {
+        if (processando) return;
+
+        processando = true;
+        erroGeral = string.Empty;
+        mensagem = string.Empty;
+
+        try
+        {
+            if (senhaLogin.Length > 1024)
+            {
+                erroGeral = "Senha inválida.";
+                return;
+            }
+
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var placa = await db.PlacaNFC.FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+
+            if (placa is null || placa.Status != StatusPlacaNFC.Ativo || string.IsNullOrWhiteSpace(placa.SenhaHash))
+            {
+                erroGeral = "Placa indisponível.";
+                return;
+            }
+
+            if (placa.BloqueadoAteUtc.HasValue && placa.BloqueadoAteUtc.Value > DateTime.UtcNow)
+            {
+                erroGeral = "Muitas tentativas. Tente novamente após " +
+                    placa.BloqueadoAteUtc.Value.ToLocalTime().ToString("HH:mm") + ".";
+                return;
+            }
+
+            var hasher = new PasswordHasher<PlacaNFC>();
+            var validacao = hasher.VerifyHashedPassword(placa, placa.SenhaHash, senhaLogin);
+
+            if (validacao == PasswordVerificationResult.Failed)
+            {
+                placa.TentativasSenha++;
+                if (placa.TentativasSenha >= 5)
+                {
+                    placa.TentativasSenha = 0;
+                    placa.BloqueadoAteUtc = DateTime.UtcNow.AddMinutes(15);
+                }
+
+                await db.SaveChangesAsync();
+                erroGeral = "Senha incorreta.";
+                return;
+            }
+
+            placa.TentativasSenha = 0;
+            placa.BloqueadoAteUtc = null;
+            await db.SaveChangesAsync();
+
+            await db.Entry(placa).Collection(x => x.Cards).LoadAsync();
+            registro = placa;
+            autenticado = true;
+            senhaLogin = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[PlacaNFC] Falha ao validar senha da placa {Codigo}", CodigoPublico);
+            erroGeral = "Não foi possível validar o acesso no momento.";
+        }
+        finally
+        {
+            processando = false;
+        }
+    }
+
+    private async Task AoSalvar()
+    {
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            registro = await db.PlacaNFC
+                .AsNoTracking()
+                .Include(x => x.Cards)
+                .FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+
+            mensagem = "Alterações salvas com sucesso.";
+            sucesso = true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[PlacaNFC] Falha ao recarregar placa {Codigo} após salvar", CodigoPublico);
+            mensagem = "As alterações foram salvas, mas não foi possível recarregar a placa.";
+            sucesso = false;
+        }
+    }
+
+    private void SairDoPainel()
+    {
+        autenticado = false;
+        senhaLogin = string.Empty;
+        mensagem = string.Empty;
+        erroGeral = string.Empty;
+    }
+}

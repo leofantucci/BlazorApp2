@@ -1,0 +1,106 @@
+@page "/clientes/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+
+@using System.ComponentModel.DataAnnotations
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject BlazorApp2.Services.CadastroService CadastroService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Clientes - Cadastro</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Clientes - Cadastro</p></div>
+    
+    @if (!string.IsNullOrEmpty(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    <div class="blueprint blueprint-2 formulario-card">
+        <p class="texto-padrao-1">Insira o NOME do cliente</p><br/>
+        <input class="entrada" placeholder="Ash Ketchum" @bind="nome" /><br/>
+
+        <p class="texto-padrao-1">Insira o NOME FANTASIA (opcional)</p><br/>
+        <input class="entrada" placeholder="PokeShop" @bind="nomeFantasia" /><br/>
+
+        <p class="texto-padrao-1">Selecione o TIPO do cliente</p><br/>
+        <select class="entrada" @bind="tipoCliente">
+            <option value="@TipoCliente.PF">Pessoa Física (PF)</option>
+            <option value="@TipoCliente.PJ">Pessoa Jurídica (PJ)</option>
+        </select><br/>
+
+        @if (tipoCliente == TipoCliente.PF)
+        {
+            <p class="texto-padrao-1">Insira o CPF do cliente (opcional)</p><br/>
+            <input class="entrada" placeholder="000.000.000-00" @bind="cpf" /><br/>
+        }
+        else
+        {
+            <p class="texto-padrao-1">Insira o CNPJ do cliente (opcional)</p><br/>
+            <input class="entrada" placeholder="00.000.000/0000-00" @bind="cnpj" /><br/>
+        }
+
+        <p class="texto-padrao-1">Insira o ENDEREÇO do cliente (opcional)</p><br/>
+        <input class="entrada" placeholder="Rua Exemplo, 123 - Cidade/UF" @bind="endereco" /><br/>
+
+        <a class="texto-padrao-1">Insira o TELEFONE do cliente (opcional)</a><br/>
+        <input class="entrada" placeholder="+55 (11) 123456789" @bind="telefone" /><br/>
+
+        <p class="texto-padrao-1">Insira o EMAIL do cliente (opcional)</p><br/>
+        <input class="entrada" type="email" placeholder="email@xyz.com" @bind="email" /><br/>
+    </div>
+
+    <!-- Botão aciona o método Salvar ao invés de navegar via href -->
+    <button class="btn btn-personalizado corSecundaria" @onclick="Salvar">Cadastrar</button>
+    <br/>
+    <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+</div>
+
+@code {
+    private string nome = string.Empty;
+    private string nomeFantasia = string.Empty;
+    private TipoCliente tipoCliente = TipoCliente.PF;
+    private string cpf = string.Empty;
+    private string cnpj = string.Empty;
+    private string endereco = string.Empty;
+    private string telefone = string.Empty;
+    private string email = string.Empty;
+    
+    private string mensagemErro = string.Empty;
+
+    private void Salvar()
+    {
+        mensagemErro = string.Empty;
+
+
+        try
+        {
+            CadastroService.CadastrarCliente(
+                nome,
+                nomeFantasia,
+                tipoCliente,
+                tipoCliente == TipoCliente.PF ? cpf : null,
+                tipoCliente == TipoCliente.PJ ? cnpj : null,
+                endereco,
+                telefone,
+                email);
+
+            NavigationManager.NavigateTo("/clientes/visualizar");
+        }
+        catch (Exception ex)
+        {
+            mensagemErro = ex is ArgumentException or InvalidOperationException
+                ? ex.Message
+                : "Não foi possível cadastrar o cliente. Verifique os dados e tente novamente.";
+        }
+    }
+
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("appNavigation.backOrFallback", "/clientes");
+    }
+}

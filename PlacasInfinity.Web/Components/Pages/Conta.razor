@@ -1,0 +1,45 @@
+@page "/conta"
+@inject NavigationManager Navigation
+<PageTitle>Entrar ou cadastrar | Placas Infinity</PageTitle>
+<div class="store-shell account-shell">
+    <header class="store-header">
+        <a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a>
+        <a class="back-link" href="/">← Voltar à loja</a>
+    </header>
+    <main class="account-grid">
+        <section class="account-intro">
+            <span class="eyebrow">SUA ÁREA INFINITY</span>
+            <h1>Bem-vindo à sua <span>experiência Infinity.</span></h1>
+            <p>Acesse seus pedidos, acompanhe cada etapa e mantenha seus dados sempre atualizados para comprar com mais praticidade.</p>
+            <div class="account-benefit">✓ Seus dados salvos para próximas compras</div>
+            <div class="account-benefit">✓ Histórico e acompanhamento dos pedidos</div>
+        </section>
+        <section class="account-forms">
+            <div class="account-form-card">
+                <h2>Já tenho uma conta</h2>
+                <p>Entre para acessar sua área do cliente.</p>
+                @if (Navigation.ToAbsoluteUri(Navigation.Uri).Query.Contains("erro=credenciais"))
+                { <p class="account-error">E-mail ou senha inválidos.</p> }
+                <form method="post" action="/conta/entrar"><AntiforgeryToken />
+                    <label class="form-field">E-mail<input name="Email" type="email" autocomplete="email" required /></label>
+                    <label class="form-field">Senha<input name="Senha" type="password" autocomplete="current-password" required /></label>
+                    <button class="store-primary submit-button" type="submit">Entrar</button>
+                </form>
+            </div>
+            <div class="account-form-card">
+                <h2>Quero me cadastrar</h2>
+                <p>Crie sua conta gratuitamente.</p>
+                @if (Navigation.ToAbsoluteUri(Navigation.Uri).Query.Contains("erro=cadastro"))
+                { <p class="account-error">Não foi possível cadastrar. Verifique se o e-mail já está em uso e se a senha tem ao menos 8 caracteres.</p> }
+                <form method="post" action="/conta/cadastrar"><AntiforgeryToken />
+                    <label class="form-field">Nome completo<input name="Nome" autocomplete="name" required maxlength="100" /></label>
+                    <label class="form-field">E-mail<input name="Email" type="email" autocomplete="email" required maxlength="150" /></label>
+                    <label class="form-field">Telefone<input name="Telefone" autocomplete="tel" maxlength="20" /></label>
+                    <label class="form-field">Crie uma senha<input name="Senha" type="password" autocomplete="new-password" minlength="8" maxlength="128" required /></label>
+                    <small class="account-hint">Use pelo menos 8 caracteres. Seus dados ficam vinculados à sua conta.</small>
+                    <button class="store-primary submit-button" type="submit">Criar minha conta</button>
+                </form>
+            </div>
+        </section>
+    </main>
+</div>

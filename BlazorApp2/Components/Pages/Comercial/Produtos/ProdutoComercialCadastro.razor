@@ -1,0 +1,31 @@
+@page "/produtos-comerciais/cadastrar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.EntityFrameworkCore
+@using Repositorio
+@using TechToysDominio
+@inject IDbContextFactory<MyDBContext> ContextFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Cadastrar produto comercial</PageTitle>
+<div class="centralizado"><div class="faixaNinja corSecundaria"><p>Cadastrar produto comercial</p></div>
+    @if (!string.IsNullOrWhiteSpace(_erro)) { <div class="alert alert-danger mt-3">@_erro</div> }
+    <div class="card p-3 mt-3"><EditForm Model="_form" OnValidSubmit="SalvarAsync" FormName="ProdutoComercialCadastro"><DataAnnotationsValidator/><ValidationSummary/>
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nome *</label><InputText class="form-control" @bind-Value="_form.Nome"/></div>
+            <div class="col-md-3"><label class="form-label">Preço (R$) *</label><InputNumber class="form-control" @bind-Value="_form.Preco"/></div>
+            <div class="col-md-3"><label class="form-label">Produto de fabricação</label><InputSelect class="form-select" @bind-Value="_form.ProdutoBaseId"><option value="">Sem vínculo</option>@foreach (var p in _bases) { <option value="@p.Id">#@p.Id - @p.Nome</option> }</InputSelect></div>
+            <div class="col-12"><label class="form-label">URL da imagem</label><InputText class="form-control" @bind-Value="_form.Foto"/></div>
+            <div class="col-12"><label class="form-label">Descrição</label><InputTextArea class="form-control" @bind-Value="_form.Descricao"/></div>
+            <div class="col-12 form-check ms-2"><InputCheckbox class="form-check-input" @bind-Value="_form.Disponivel"/><label class="form-check-label">Publicar na loja Placas Infinity</label></div>
+        </div>
+        <div class="d-flex gap-2 mt-3"><button class="btn btn-primary" type="submit" disabled="@_salvando">@(_salvando ? "Salvando..." : "Cadastrar")</button><a class="btn btn-secondary" href="/produtos-comerciais/visualizar">Cancelar</a></div>
+    </EditForm></div>
+</div>
+@code {
+    private sealed class Formulario { [Required, StringLength(100)] public string Nome { get; set; } = ""; [Range(0.01, 99999999, ErrorMessage = "O preço deve ser igual ou superior a R$ 0,01.")] public decimal Preco { get; set; } [StringLength(500)] public string Foto { get; set; } = ""; [StringLength(2000)] public string? Descricao { get; set; } public int? ProdutoBaseId { get; set; } public bool Disponivel { get; set; } = true; }
+    private Formulario _form = new(); private List<Produto> _bases = new(); private bool _salvando; private string? _erro;
+    protected override async Task OnInitializedAsync() { await using var db = await ContextFactory.CreateDbContextAsync(); _bases = await db.Produto.AsNoTracking().OrderBy(p => p.Nome).ToListAsync(); }
+    private async Task SalvarAsync() { if (_salvando) return; _salvando = true; try { await using var db = await ContextFactory.CreateDbContextAsync(); if (_form.ProdutoBaseId.HasValue && !await db.Produto.AnyAsync(p => p.Id == _form.ProdutoBaseId.Value)) throw new InvalidOperationException("Produto de fabricação inválido."); db.ProdutoComercial.Add(new ProdutoComercial { Nome = _form.Nome.Trim(), Preco = _form.Preco, Foto = _form.Foto.Trim(), Descricao = _form.Descricao?.Trim(), ProdutoBaseId = _form.ProdutoBaseId, Disponivel = _form.Disponivel, DataCriacaoUtc = DateTime.UtcNow }); await db.SaveChangesAsync(); Navigation.NavigateTo("/produtos-comerciais/visualizar"); } catch (Exception ex) { _erro = $"Não foi possível cadastrar: {ex.Message}"; } finally { _salvando = false; } }
+}

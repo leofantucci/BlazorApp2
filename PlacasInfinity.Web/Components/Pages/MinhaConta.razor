@@ -1,0 +1,62 @@
+@page "/minha-conta"
+@attribute [Authorize]
+@inject ContaService Conta
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+@using System.Security.Claims
+
+<PageTitle>Minha conta | Placas Infinity</PageTitle>
+<div class="store-shell account-shell">
+    <header class="store-header">
+        <a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a>
+        <nav class="account-nav"><a href="/meus-pedidos">Meus pedidos</a><a href="/">Loja</a></nav>
+    </header>
+    @if (_carregando) { <p class="store-message">Carregando seus dados...</p> }
+    else if (_cliente is null) { <div class="empty-catalog"><h2>Não foi possível carregar sua conta.</h2></div> }
+    else
+    {
+        <main class="profile-layout">
+            <section class="profile-heading">
+                <span class="eyebrow">ÁREA DO CLIENTE</span>
+                <h1>Olá, @_cliente.Nome.Split(' ')[0]!</h1>
+                <p>Gerencie seus dados para agilizar suas próximas compras.</p>
+                @if (Navigation.ToAbsoluteUri(Navigation.Uri).Query.Contains("salvo=1"))
+                { <p class="account-success">✓ Informações atualizadas com sucesso.</p> }
+            </section>
+            <section class="account-form-card profile-card">
+                <h2>Seus dados</h2>
+                <form method="post" action="/conta/perfil"><AntiforgeryToken />
+                    <div class="form-grid">
+                        <label class="form-field full">Nome completo<input name="Nome" value="@_cliente.Nome" required maxlength="100" /></label>
+                        <label class="form-field">Tipo de cadastro<select name="TipoCliente"><option value="PF" selected="@(_cliente.TipoCliente == TipoCliente.PF)">Pessoa física</option><option value="PJ" selected="@(_cliente.TipoCliente == TipoCliente.PJ)">Pessoa jurídica</option></select></label>
+                        <label class="form-field">Nome fantasia<input name="NomeFantasia" value="@_cliente.NomeFantasia" maxlength="100" /></label>
+                        <label class="form-field">CPF<input name="CPF" value="@_cliente.CPF" maxlength="14" /></label>
+                        <label class="form-field">CNPJ<input name="CNPJ" value="@_cliente.CNPJ" maxlength="18" /></label>
+                        <label class="form-field">E-mail<input value="@_cliente.Email" disabled /></label>
+                        <label class="form-field">Telefone<input name="Telefone" value="@_cliente.Telefone" maxlength="20" /></label>
+                        <label class="form-field full">Logradouro / endereço<input name="Endereco" value="@_cliente.Endereco" maxlength="200" /></label>
+                        <label class="form-field">Número<input name="Numero" value="@_cliente.Numero" maxlength="12" /></label>
+                        <label class="form-field">Complemento<input name="Complemento" value="@_cliente.Complemento" maxlength="100" /></label>
+                        <label class="form-field">Bairro<input name="Bairro" value="@_cliente.Bairro" maxlength="100" /></label>
+                        <label class="form-field">CEP<input name="CEP" value="@_cliente.CEP" maxlength="20" /></label>
+                        <label class="form-field">Cidade<input name="Cidade" value="@_cliente.Cidade" maxlength="100" /></label>
+                        <label class="form-field">Estado (UF)<input name="Estado" value="@_cliente.Estado" maxlength="2" /></label>
+                    </div>
+                    <button class="store-primary" type="submit">Salvar informações</button>
+                </form>
+            </section>
+            <a class="account-order-link" href="/meus-pedidos">Acompanhar meus pedidos →</a>
+        </main>
+    }
+</div>
+@code {
+    private Cliente? _cliente;
+    private bool _carregando = true;
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var raw = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (int.TryParse(raw, out var id)) _cliente = await Conta.ObterClienteAsync(id);
+        _carregando = false;
+    }
+}

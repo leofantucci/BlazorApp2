@@ -1,0 +1,48 @@
+@page "/produtos-comerciais"
+@rendermode InteractiveServer
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Produtos Comerciais</PageTitle>
+
+<h1 class="faixaNinja">Produtos Comerciais</h1>
+
+<div class="sera">
+    <!-- Grid com os cards -->
+    <AuthorizeView Roles="admin, gerente">
+        <div class="container-personalizado-2">
+            <div class="card-personalizado-2">
+                <a href="/produtos-comerciais/visualizar"><img class="foto-2" src="Media/visualizar.webp" alt="Icone-Visualizar"/></a>
+                <a class="texto-padrao-1" href="/produtos-comerciais/visualizar">Visualizar</a>
+            </div>
+            <div class="card-personalizado-2">
+                <a href="/produtos-comerciais/cadastrar"><img class="foto-2" src="Media/cadastrar.webp" alt="Icone-Cadastrar"/></a>
+                <a class="texto-padrao-1" href="/produtos-comerciais/cadastrar">Cadastrar</a>
+            </div>
+            <div class="card-personalizado-2">
+                <a href="/produtos-comerciais/visualizar"><img class="foto-2" src="Media/editar.webp" alt="Icone-Editar"/></a>
+                <a class="texto-padrao-1" href="/produtos-comerciais/visualizar">Editar</a>
+            </div>
+            <div class="card-personalizado-2">
+                <a href="/produtos-comerciais/visualizar"><img class="foto-2" src="Media/deletar.webp" alt="Icone-Deletar"/></a>
+                <a class="texto-padrao-1" href="/produtos-comerciais/visualizar">Deletar</a>
+            </div>
+        </div>
+    </AuthorizeView>
+    <!-- Área exclusiva para o botão Voltar, logo abaixo do bloco de cards -->
+    <div class="area-botoes">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private async Task Voltar()
+    {
+        await JS.InvokeVoidAsync("appNavigation.backOrFallback", "/produtos");
+    }
+}

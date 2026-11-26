@@ -1,0 +1,132 @@
+@page "/placas/nfc/{CodigoPublico}"
+@inject IDbContextFactory<MyDBContext> ContextFactory
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Identity
+
+<PageTitle>Ativar placa NFC | Placas Infinity</PageTitle>
+<div class="store-shell activation-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a><a class="back-link" href="/">Loja</a></header>
+    @if (_carregando)
+    {
+        <p class="store-message">Verificando sua placa...</p>
+    }
+    else if (_placa is null)
+    {
+        <div class="empty-catalog"><h2>Placa não encontrada</h2><p>Confira o endereço ou entre em contato com o suporte.</p></div>
+    }
+    else if (_placa.Status == StatusPlacaNFC.Ativo)
+    {
+        <section class="public-card-view">
+            <span class="eyebrow">PLACA NFC</span>
+            <h1>@(string.IsNullOrWhiteSpace(_placa.Nome) ? "Conecte-se comigo" : _placa.Nome)</h1>
+            @if (_placa.Cards.Count == 0) { <p>Esta placa ainda não possui links cadastrados.</p> }
+            @foreach (var card in _placa.Cards.OrderBy(c => c.Ordem))
+            {
+                <a class="public-link-card" href="@card.Link" target="_blank" rel="noopener noreferrer">
+                    @if (!string.IsNullOrWhiteSpace(card.Icone)) { <img src="@card.Icone" alt="" /> }
+                    <span><strong>@card.Nome</strong>@if (!string.IsNullOrWhiteSpace(card.Descricao)) { <small>@card.Descricao</small> }</span>
+                    <span class="public-link-arrow">↗</span>
+                </a>
+            }
+            <a class="manage-plate-link" href="@($"/placas/nfc/{CodigoPublico}/editar")">Gerenciar minha placa</a>
+        </section>
+    }
+    else if (_placa.Status != StatusPlacaNFC.Pendente)
+    {
+        <div class="empty-catalog"><h2>Placa indisponível</h2><p>Esta placa está bloqueada ou foi cancelada.</p></div>
+    }
+    else
+    {
+        <section class="activation-card">
+            <span class="eyebrow">BEM-VINDO À INFINITY</span><h1>Ative sua placa NFC</h1>
+            <p>Informe o código que veio junto com sua placa e crie uma senha para proteger o acesso aos seus links.</p>
+            <div class="activation-fields">
+                <label>Código de ativação<input maxlength="10" autocomplete="one-time-code" @bind="_codigo" @bind:event="oninput" /></label>
+                <label>Crie uma senha (mínimo de 8 caracteres)<input type="password" autocomplete="new-password" @bind="_senha" /></label>
+                <label>Confirme sua senha<input type="password" autocomplete="new-password" @bind="_confirmacao" /></label>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_mensagem)) { <p class="activation-error">@_mensagem</p> }
+            <button class="store-primary" @onclick="AtivarAsync" disabled="@_processando">@(_processando ? "Ativando..." : "Ativar placa")</button>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public string CodigoPublico { get; set; } = string.Empty;
+    private PlacaNFC? _placa;
+    private bool _carregando = true;
+    private bool _processando;
+    private string _codigo = string.Empty;
+    private string _senha = string.Empty;
+    private string _confirmacao = string.Empty;
+    private string? _mensagem;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        _placa = await db.PlacaNFC.AsNoTracking().Include(x => x.Cards).FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+        _carregando = false;
+    }
+
+    private async Task AtivarAsync()
+    {
+        if (_processando) return;
+        if (string.IsNullOrWhiteSpace(_codigo) || _senha.Length < 8 || _senha != _confirmacao)
+        {
+            _mensagem = "Informe o código e uma senha com pelo menos 8 caracteres. A confirmação deve ser igual.";
+            return;
+        }
+        _processando = true;
+        try
+        {
+            await using var db = await ContextFactory.CreateDbContextAsync();
+            var placa = await db.PlacaNFC.FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+            if (placa is null || placa.Status != StatusPlacaNFC.Pendente)
+            {
+                _mensagem = "Esta placa não está disponível para ativação.";
+                return;
+            }
+            if (placa.BloqueadoAteUtc.HasValue && placa.BloqueadoAteUtc.Value > DateTime.UtcNow)
+            {
+                _mensagem = "Muitas tentativas. Aguarde o desbloqueio para tentar novamente.";
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(placa.CodigoAtivacaoHash))
+            {
+                _mensagem = "Esta placa ainda não possui código de ativação configurado. Entre em contato com o suporte.";
+                return;
+            }
+            var hasher = new PasswordHasher<PlacaNFC>();
+            var codigo = _codigo.Trim().ToUpperInvariant();
+            if (hasher.VerifyHashedPassword(placa, placa.CodigoAtivacaoHash, codigo) == PasswordVerificationResult.Failed)
+            {
+                placa.TentativasSenha++;
+                if (placa.TentativasSenha >= 5)
+                {
+                    placa.TentativasSenha = 0;
+                    placa.BloqueadoAteUtc = DateTime.UtcNow.AddMinutes(15);
+                }
+                await db.SaveChangesAsync();
+                _mensagem = "Código de ativação incorreto. Após cinco tentativas, a placa fica bloqueada por 15 minutos.";
+                return;
+            }
+            placa.SenhaHash = hasher.HashPassword(placa, _senha);
+            placa.CodigoAtivacaoHash = null;
+            placa.CodigoAtivacao = null;
+            placa.TentativasSenha = 0;
+            placa.BloqueadoAteUtc = null;
+            placa.Status = StatusPlacaNFC.Ativo;
+            placa.DataAtivacaoUtc = DateTime.UtcNow;
+            placa.DataAtualizacaoUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            _placa = placa;
+            _mensagem = null;
+            Navigation.NavigateTo($"/placas/nfc/{CodigoPublico}/editar");
+        }
+        catch
+        {
+            _mensagem = "Não foi possível ativar sua placa agora. Tente novamente.";
+        }
+        finally { _processando = false; }
+    }
+}

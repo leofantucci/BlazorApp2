@@ -1,0 +1,399 @@
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using TechToysDominio
+@using Repositorio
+@inject IDbContextFactory<MyDBContext> DbFactory
+@inject ILogger<PlacaNfcEditor> Logger
+
+<div class="placa-nfc-editor">
+    @if (!string.IsNullOrWhiteSpace(mensagem))
+    {
+        <div class="alert @(sucesso ? "alert-success" : "alert-danger")">@mensagem</div>
+    }
+
+    <div class="form-field">
+        <label class="form-label" for="placa-nfc-nome">Nome da placa / negócio</label>
+        <input id="placa-nfc-nome" class="form-control" maxlength="120" @bind="nomePlaca" placeholder="Ex.: TechToys" />
+    </div>
+
+    <div class="placa-nfc-editor-topo">
+        <div>
+            <h5>Seus links</h5>
+            <p class="text-muted mb-0">Adicione os cards que aparecerão quando alguém aproximar o celular da placa.</p>
+        </div>
+        <button type="button" class="btn btn-primary" @onclick="AbrirPaleta" disabled="@(cards.Count >= LimiteCards)">
+            + Adicionar card
+        </button>
+    </div>
+
+    @if (cards.Count == 0)
+    {
+        <div class="placa-nfc-vazio">
+            Nenhum card adicionado ainda. Clique em <strong>Adicionar card</strong> para começar.
+        </div>
+    }
+    else
+    {
+        <div class="placa-nfc-editor-lista">
+            @foreach (var card in cards)
+            {
+                <div class="placa-nfc-editor-card" @key="card">
+                    <div class="placa-nfc-editor-card-icone">
+                        <div class="placa-nfc-icone-preview">
+                            <img src="@ObterIcone(card.Tipo)" alt="" />
+                        </div>
+                    </div>
+
+                    <div class="placa-nfc-editor-card-campos">
+                        <div class="form-field">
+                            <label class="form-label">Nome do card</label>
+                            <input class="form-control" maxlength="80" @bind="card.Nome" placeholder="Ex.: Instagram" />
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label">Descrição</label>
+                            <input class="form-control" maxlength="160" @bind="card.Descricao" placeholder="Ex.: Nos siga no Instagram" />
+                        </div>
+
+                        <div class="form-field">
+                            <label class="form-label">Link</label>
+                            <input class="form-control" type="url" maxlength="500" @bind="card.Link" placeholder="https://..." />
+                        </div>
+
+                    </div>
+
+                    <div class="placa-nfc-editor-card-acoes">
+                        <button type="button" class="btn btn-sm btn-secondary" @onclick="() => Mover(card, -1)" disabled="@(cards.IndexOf(card) == 0)" title="Mover para cima">↑</button>
+                        <button type="button" class="btn btn-sm btn-secondary" @onclick="() => Mover(card, 1)" disabled="@(cards.IndexOf(card) == cards.Count - 1)" title="Mover para baixo">↓</button>
+                        <button type="button" class="btn btn-sm btn-danger" @onclick="() => Remover(card)">Remover</button>
+                    </div>
+                </div>
+            }
+        </div>
+        <p class="form-text mt-2">@cards.Count de @LimiteCards cards. Cards sem link válido não aparecem na página pública.</p>
+    }
+
+    @if (PermitirAlterarSenha)
+    {
+        <div class="placa-nfc-editor-senha">
+            <h5>Alterar senha (opcional)</h5>
+            <p class="text-muted">Deixe os campos vazios para manter a senha atual.</p>
+            <div class="form-grid">
+                <div class="form-field">
+                    <label class="form-label">Nova senha</label>
+                    <input class="form-control" type="password" autocomplete="new-password" @bind="novaSenha" placeholder="Mínimo de 8 caracteres" />
+                </div>
+                <div class="form-field">
+                    <label class="form-label">Confirmar nova senha</label>
+                    <input class="form-control" type="password" autocomplete="new-password" @bind="confirmarNovaSenha" />
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="placa-nfc-editor-footer">
+        <button type="button" class="btn btn-primary" @onclick="Salvar" disabled="@processando">
+            @(processando ? "Salvando..." : "Salvar alterações")
+        </button>
+    </div>
+</div>
+
+@if (mostrarPaleta)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.55);">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable placa-nfc-paleta-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Adicionar card</h5>
+                    <button type="button" class="btn-close" aria-label="Fechar" @onclick="FecharPaleta"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted">Escolha um modelo. Ele já vem com ícone, nome e descrição; depois você altera o link.</p>
+                    <div class="placa-nfc-paleta">
+                        @foreach (var modelo in PlacaNfcCardTemplates.Todos)
+                        {
+                            <button type="button" class="placa-nfc-paleta-item" @onclick="() => AdicionarModelo(modelo)">
+                                <div class="placa-nfc-icone-preview">
+                                    <img src="@modelo.Icone" alt="" />
+                                </div>
+                                <span class="placa-nfc-paleta-texto">
+                                    <strong>@modelo.Nome</strong>
+                                    <small>@modelo.Descricao</small>
+                                </span>
+                            </button>
+                        }
+
+                        <button type="button" class="placa-nfc-paleta-item" @onclick="AdicionarPersonalizado">
+                            <div class="placa-nfc-icone-preview">
+                                <span class="placa-nfc-icone-fallback">+</span>
+                            </div>
+                            <span class="placa-nfc-paleta-texto">
+                                <strong>Personalizado</strong>
+                                <small>Defina seu próprio link, nome e descrição</small>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="FecharPaleta">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private const int LimiteCards = 30;
+
+    [Parameter, EditorRequired] public PlacaNFC Placa { get; set; } = null!;
+    [Parameter] public bool Autenticado { get; set; }
+    [Parameter] public bool PermitirAlterarSenha { get; set; } = true;
+    [Parameter] public EventCallback OnSalvo { get; set; }
+
+    private readonly List<CardDraft> cards = new();
+    private string nomePlaca = string.Empty;
+    private string novaSenha = string.Empty;
+    private string confirmarNovaSenha = string.Empty;
+    private string mensagem = string.Empty;
+    private bool sucesso;
+    private bool processando;
+    private bool mostrarPaleta;
+    private int? placaInicializadaId;
+
+    protected override void OnParametersSet()
+    {
+        if (Placa is null) return;
+        if (placaInicializadaId == Placa.Id) return;
+
+        placaInicializadaId = Placa.Id;
+        nomePlaca = Placa.Nome ?? string.Empty;
+        cards.Clear();
+        foreach (var card in Placa.Cards.OrderBy(x => x.Ordem))
+        {
+            cards.Add(new CardDraft
+            {
+                Id = card.Id,
+                Tipo = card.Tipo,
+                Icone = card.Icone,
+                Nome = card.Nome,
+                Descricao = card.Descricao ?? string.Empty,
+                Link = card.Link
+            });
+        }
+    }
+
+    private void AbrirPaleta()
+    {
+        if (cards.Count >= LimiteCards) return;
+        mensagem = string.Empty;
+        mostrarPaleta = true;
+    }
+
+    private void FecharPaleta() => mostrarPaleta = false;
+
+    private void AdicionarModelo(ModeloCardNFC modelo)
+    {
+        if (cards.Count >= LimiteCards) return;
+        cards.Add(new CardDraft
+        {
+            Tipo = modelo.Tipo,
+            Icone = modelo.Icone,
+            Nome = modelo.Nome,
+            Descricao = modelo.Descricao
+        });
+        mostrarPaleta = false;
+    }
+
+    private void AdicionarPersonalizado()
+    {
+        if (cards.Count >= LimiteCards) return;
+        cards.Add(new CardDraft { Tipo = TipoCardNFC.Personalizado });
+        mostrarPaleta = false;
+    }
+
+    private void Remover(CardDraft card) => cards.Remove(card);
+
+    private void Mover(CardDraft card, int direcao)
+    {
+        var indice = cards.IndexOf(card);
+        var novoIndice = indice + direcao;
+        if (indice < 0 || novoIndice < 0 || novoIndice >= cards.Count) return;
+
+        (cards[indice], cards[novoIndice]) = (cards[novoIndice], cards[indice]);
+    }
+
+    private async Task Salvar()
+    {
+        if (processando) return;
+
+        mensagem = string.Empty;
+        sucesso = false;
+
+        if (!Autenticado)
+        {
+            mensagem = "Digite a senha da placa para salvar as alterações.";
+            return;
+        }
+
+        if (Placa is null)
+        {
+            mensagem = "Placa não encontrada.";
+            return;
+        }
+
+        var nomeNormalizado = nomePlaca.Trim();
+        if (nomeNormalizado.Length > 120)
+        {
+            mensagem = "O nome da placa deve ter até 120 caracteres.";
+            return;
+        }
+
+        if (cards.Count > LimiteCards)
+        {
+            mensagem = $"Uma placa pode ter no máximo {LimiteCards} cards.";
+            return;
+        }
+
+        var cardsNormalizados = new List<CardNormalizado>();
+        foreach (var card in cards)
+        {
+            var nomeCard = (card.Nome ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(nomeCard))
+            {
+                mensagem = "Informe o nome de todos os cards.";
+                return;
+            }
+            if (nomeCard.Length > 80)
+            {
+                mensagem = $"O nome do card \"{nomeCard}\" deve ter até 80 caracteres.";
+                return;
+            }
+
+            var descricao = (card.Descricao ?? string.Empty).Trim();
+            if (descricao.Length > 160)
+            {
+                mensagem = $"A descrição do card \"{nomeCard}\" deve ter até 160 caracteres.";
+                return;
+            }
+
+            var link = (card.Link ?? string.Empty).Trim();
+            if (link.Length > 500)
+            {
+                mensagem = $"O link do card \"{nomeCard}\" deve ter até 500 caracteres.";
+                return;
+            }
+            if (!string.IsNullOrWhiteSpace(link))
+            {
+                if (!PlacaNfcLinks.TentarNormalizarLink(link, out var linkNormalizado))
+                {
+                    mensagem = $"O link do card \"{nomeCard}\" precisa começar com http:// ou https://.";
+                    return;
+                }
+                link = linkNormalizado;
+            }
+
+            var iconeNormalizado = ObterIcone(card.Tipo);
+            cardsNormalizados.Add(new CardNormalizado(card.Tipo, iconeNormalizado, nomeCard, descricao, link));
+        }
+
+        if (!string.IsNullOrWhiteSpace(novaSenha))
+        {
+            if (novaSenha.Length < 8)
+            {
+                mensagem = "A nova senha precisa ter pelo menos 8 caracteres.";
+                return;
+            }
+            if (!string.Equals(novaSenha, confirmarNovaSenha, StringComparison.Ordinal))
+            {
+                mensagem = "A confirmação da nova senha não confere.";
+                return;
+            }
+        }
+
+        processando = true;
+        try
+        {
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var placaDb = await db.PlacaNFC
+                .Include(x => x.Cards)
+                .FirstOrDefaultAsync(x => x.Id == Placa.Id);
+
+            if (placaDb is null || placaDb.Status != StatusPlacaNFC.Ativo)
+            {
+                mensagem = "Placa não encontrada ou inativa.";
+                return;
+            }
+
+            placaDb.Nome = string.IsNullOrWhiteSpace(nomeNormalizado) ? null : nomeNormalizado;
+            placaDb.DataAtualizacaoUtc = DateTime.UtcNow;
+
+            if (!string.IsNullOrWhiteSpace(novaSenha))
+            {
+                placaDb.SenhaHash = new PasswordHasher<PlacaNFC>().HashPassword(placaDb, novaSenha);
+                novaSenha = string.Empty;
+                confirmarNovaSenha = string.Empty;
+            }
+
+            var cardsAntigos = placaDb.Cards.ToList();
+            db.PlacaNFCCard.RemoveRange(cardsAntigos);
+            placaDb.Cards.Clear();
+
+            for (var i = 0; i < cardsNormalizados.Count; i++)
+            {
+                var card = cardsNormalizados[i];
+                placaDb.Cards.Add(new PlacaNFCCard
+                {
+                    Tipo = card.Tipo,
+                    Icone = card.Icone,
+                    Nome = card.Nome,
+                    Descricao = string.IsNullOrWhiteSpace(card.Descricao) ? null : card.Descricao,
+                    Link = card.Link,
+                    Ordem = i
+                });
+            }
+
+            await db.SaveChangesAsync();
+
+            Placa.Nome = placaDb.Nome;
+            Placa.Cards = placaDb.Cards.OrderBy(x => x.Ordem).ToList();
+            placaInicializadaId = Placa.Id;
+
+            mensagem = "Alterações salvas com sucesso.";
+            sucesso = true;
+            await OnSalvo.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "[PlacaNFC] Falha ao salvar cards da placa {PlacaId}", Placa.Id);
+            mensagem = "Não foi possível salvar as alterações no momento. Tente novamente.";
+            sucesso = false;
+        }
+        finally
+        {
+            processando = false;
+        }
+    }
+
+    private static string ObterIcone(TipoCardNFC tipo)
+    {
+        return PlacaNfcCardTemplates.Todos.FirstOrDefault(x => x.Tipo == tipo)?.Icone
+            ?? "Media/site.webp";
+    }
+
+    private sealed class CardDraft
+    {
+        public int Id { get; set; }
+        public TipoCardNFC Tipo { get; set; }
+        public string Icone { get; set; } = string.Empty;
+        public string Nome { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public string Link { get; set; } = string.Empty;
+    }
+
+    private sealed record CardNormalizado(
+        TipoCardNFC Tipo,
+        string Icone,
+        string Nome,
+        string Descricao,
+        string Link);
+}

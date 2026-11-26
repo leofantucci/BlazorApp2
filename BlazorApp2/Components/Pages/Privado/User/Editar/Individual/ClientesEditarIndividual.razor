@@ -1,0 +1,151 @@
+@page "/clientes/editar/{id:int}"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using System.ComponentModel.DataAnnotations
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Clientes - Editar Clientes</PageTitle>
+
+<div class="centralizado pagina-formulario">
+    <div class="faixaNinja corSecundaria"><p>Editar Cliente</p></div>
+
+    @if (!string.IsNullOrWhiteSpace(mensagemErro))
+    {
+        <div class="alert alert-danger">@mensagemErro</div>
+    }
+
+    @if (cliente != null)
+    {
+        <div class="blueprint blueprint-2 formulario-card form-edit-card">
+            <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input class="form-control" @bind="cliente.Nome" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Nome Fantasia</label>
+                <input class="form-control" @bind="cliente.NomeFantasia" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo de Cliente</label>
+                <select class="form-control" @bind="cliente.TipoCliente">
+                    <option value="@TipoCliente.PF">Pessoa Física (PF)</option>
+                    <option value="@TipoCliente.PJ">Pessoa Jurídica (PJ)</option>
+                </select>
+            </div>
+            @if (cliente.TipoCliente == TipoCliente.PF)
+            {
+                <div class="mb-3">
+                    <label class="form-label">CPF</label>
+                    <input class="form-control" @bind="cliente.CPF" />
+                </div>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label class="form-label">CNPJ</label>
+                    <input class="form-control" @bind="cliente.CNPJ" />
+                </div>
+            }
+            <div class="mb-3">
+                <label class="form-label">Endereço</label>
+                <input class="form-control" @bind="cliente.Endereco" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Telefone</label>
+                <input class="form-control" @bind="cliente.Telefone" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" @bind="cliente.Email" />
+            </div>
+            <button class="btn btn-primary" @onclick="Salvar">Salvar</button>
+            <button class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    }
+    else
+    {
+        <p class="texto-padrao-1 mt-3">Cliente não encontrado.</p>
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Cliente? cliente;
+    private string mensagemErro = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        cliente = RepositorioTechToys.ListarTodos<Cliente>()?.FirstOrDefault(f => f.Id == Id);
+    }
+
+    private void Salvar()
+    {
+        if (cliente == null) return;
+
+        mensagemErro = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(cliente.Nome))
+        {
+            mensagemErro = "Por favor, preencha o Nome do cliente.";
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(cliente.Email) && !new EmailAddressAttribute().IsValid(cliente.Email))
+        {
+            mensagemErro = "Informe um e-mail válido.";
+            return;
+        }
+
+        if (!Enum.IsDefined(typeof(TipoCliente), cliente.TipoCliente))
+        {
+            mensagemErro = "Selecione um tipo de cliente válido (PF ou PJ).";
+            return;
+        }
+
+        cliente.Nome = cliente.Nome.Trim();
+        cliente.NomeFantasia = NormalizarTexto(cliente.NomeFantasia);
+        cliente.Endereco = NormalizarTexto(cliente.Endereco);
+        cliente.Telefone = NormalizarTexto(cliente.Telefone);
+        cliente.Email = NormalizarTexto(cliente.Email);
+
+        // Cada tipo de cliente possui apenas um documento fiscal aplicável.
+        cliente.CPF = cliente.TipoCliente == TipoCliente.PF ? NormalizarTexto(cliente.CPF) : null;
+        cliente.CNPJ = cliente.TipoCliente == TipoCliente.PJ ? NormalizarTexto(cliente.CNPJ) : null;
+
+        if (cliente.Nome.Length > 100 ||
+            cliente.NomeFantasia?.Length > 100 ||
+            cliente.CPF?.Length > 14 ||
+            cliente.CNPJ?.Length > 18 ||
+            cliente.Endereco?.Length > 200 ||
+            cliente.Telefone?.Length > 20 ||
+            cliente.Email?.Length > 150)
+        {
+            mensagemErro = "Um dos campos ultrapassou o tamanho máximo permitido.";
+            return;
+        }
+
+        try
+        {
+            RepositorioTechToys.Atualizar(cliente);
+            NavigationManager.NavigateTo("/clientes/visualizar");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao atualizar cliente: {ex}");
+            mensagemErro = ex is InvalidOperationException or ArgumentException
+                ? ex.Message
+                : "Não foi possível salvar as alterações do cliente.";
+        }
+    }
+
+    private static string? NormalizarTexto(string? valor)
+        => string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("appNavigation.backOrFallback", "/clientes");
+}

@@ -1,0 +1,204 @@
+@page "/calculadora-producao"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+
+<PageTitle>Calculadora Suprema de Produção</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Calculadora Suprema de Produção</p></div>
+    <div class="card p-3 mt-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Produto</label>
+                <select class="form-select" value="@produtoId" @onchange="SelecionarProduto">
+                    <option value="0">Selecione um produto...</option>
+                    @foreach (var p in produtos) { <option value="@p.Id">@p.Nome (ID @p.Id)</option> }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Embalagem (opcional)</label>
+                <select class="form-select" value="@embalagemId" @onchange="SelecionarEmbalagem">
+                    <option value="0">Sem embalagem</option>
+                    @foreach (var e in embalagens) { <option value="@e.Id">@e.Nome — @e.Preco.ToString("C2")</option> }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Quantidade desejada</label>
+                <InputNumber class="form-control" @bind-Value="quantidadeDesejada" min="1" />
+            </div>
+            <div class="col-12"><button type="button" class="btn btn-outline-primary" @onclick="AtualizarEstoques">Atualizar dados do estoque</button></div>
+        </div>
+        @if (produto is not null)
+        {
+            @if (QuantidadeSolicitada > CapacidadeMaxima)
+            {
+                <div class="alert alert-warning mt-3 mb-0">Você solicitou @QuantidadeSolicitada unidades, mas o estoque atual permite fabricar @CapacidadeMaxima. A tabela abaixo mostra os insumos necessários para a quantidade solicitada e indica o que está em falta.</div>
+            }
+            <div class="row g-3 mt-2">
+                <div class="col-md-3"><div class="p-3 rounded calculadora-metrica"><small>Máximo estimado</small><h3 class="mb-0">@CapacidadeMaxima un.</h3></div></div>
+                <div class="col-md-3"><div class="p-3 rounded calculadora-metrica"><small>Tempo estimado</small><h3 class="mb-0">@FormatarTempo(TempoTotalMinutos)</h3></div></div>
+                <div class="col-md-3"><div class="p-3 rounded calculadora-metrica"><small>Custo total estimado</small><h3 class="mb-0">@CustoTotal.ToString("C2")</h3></div></div>
+                <div class="col-md-3"><div class="p-3 rounded calculadora-metrica"><small>Lucro líquido estimado</small><h3 class="mb-0 @(Lucro >= 0 ? "text-success" : "text-danger")">@Lucro.ToString("C2")</h3></div></div>
+            </div>
+            <div class="alert alert-info mt-3 mb-0">Simulação somente de leitura: nenhum estoque é reservado ou alterado. O cálculo considera primeiro as peças já disponíveis e fabrica virtualmente as peças faltantes usando as matérias-primas cadastradas. As cargas de impressoras diferentes são consideradas paralelas. O lucro é estimado após matéria-prima, energia e embalagem selecionada; impostos, taxas e despesas administrativas não cadastradas não entram no cálculo.</div>
+            @if (produto.Composicao.Count == 0)
+            {
+                <div class="alert alert-warning mt-3">Este produto não possui receita cadastrada.</div>
+            }
+            else
+            {
+                <h5 class="mt-4">Receita / itens necessários</h5>
+                <div class="table-responsive"><table class="table table-striped table-bordered align-middle">
+                    <thead class="table-dark"><tr><th>Item</th><th>Necessário para @QuantidadeSolicitada</th><th>Disponível</th><th>Origem / situação</th></tr></thead>
+                    <tbody>
+                    @foreach (var linha in LinhasReceita)
+                    {
+                        <tr><td><strong>@linha.Nome</strong><div class="small text-muted">@linha.Unidade</div></td><td>@linha.Necessario.ToString("N3")</td><td>@linha.Disponivel.ToString("N3")</td><td>@linha.Status</td></tr>
+                    }
+                    </tbody></table></div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4"><div class="p-3 border rounded"><small>Faturamento potencial</small><h4>@Faturamento.ToString("C2")</h4></div></div>
+                    <div class="col-md-4"><div class="p-3 border rounded"><small>Custo por unidade</small><h4>@CustoUnitario.ToString("C2")</h4></div></div>
+                    <div class="col-md-4"><div class="p-3 border rounded"><small>Lucro por unidade</small><h4 class="text-success">@LucroUnitario.ToString("C2")</h4></div></div>
+                </div>
+            }
+        }
+        else
+        {
+            <p class="text-muted mt-3 mb-0">Selecione um produto para analisar estoque, materiais, tempo e rentabilidade.</p>
+        }
+    </div>
+</div>
+
+@code {
+    private List<Produto> produtos = new();
+    private List<Embalagem> embalagens = new();
+    private Produto? produto;
+    private int produtoId, embalagemId, quantidadeDesejada = 1;
+    private decimal CapacidadeMaxima;
+    private Dictionary<int, decimal> estoquesPecas = new();
+    private Dictionary<int, decimal> estoquesMaterias = new();
+    private Dictionary<int, decimal> estoquesEmbalagens = new();
+    private int QuantidadeSolicitada => Math.Max(1, quantidadeDesejada);
+    private int QuantidadeCalculada => Math.Max(0, Math.Min(QuantidadeSolicitada, (int)Math.Min(CapacidadeMaxima, int.MaxValue)));
+    private double TempoTotalMinutos => produto is null ? 0 : produto.Composicao
+        .GroupBy(x => x.Peca.Impressora?.Id ?? -x.Peca.Id)
+        .Select(g => g.Sum(x =>
+        {
+            var demandaPecas = QuantidadeCalculada * x.Quantidade;
+            var saldoPecas = (int)estoquesPecas.GetValueOrDefault(x.PecaId);
+            var pecasAFabricar = Math.Max(0, demandaPecas - saldoPecas);
+            return x.Peca.Tempo_Impressao * pecasAFabricar;
+        }))
+        .DefaultIfEmpty(0).Max();
+    private double TempoPorUnidade => produto?.Composicao.GroupBy(x => x.Peca.Impressora?.Id ?? -x.Peca.Id).Select(g => g.Sum(x => x.Peca.Tempo_Impressao * x.Quantidade)).DefaultIfEmpty(0).Max() ?? 0;
+    private double CustoUnitario => produto is null ? 0 : produto.Calcular_Custo_Total() + (embalagens.FirstOrDefault(x => x.Id == embalagemId)?.Preco ?? 0);
+    private double CustoTotal => CustoUnitario * QuantidadeCalculada;
+    private double Faturamento => (produto?.Valor_Venda ?? 0) * QuantidadeCalculada;
+    private double LucroUnitario => (produto?.Valor_Venda ?? 0) - CustoUnitario;
+    private double Lucro => Faturamento - CustoTotal;
+    private List<LinhaReceita> LinhasReceita => MontarLinhas();
+
+    protected override void OnInitialized()
+    {
+        produtos = (RepositorioTechToys.ListarTodos<Produto>() ?? new()).Where(x => x.Ativo).ToList();
+        embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+        AtualizarEstoques();
+    }
+    private void AtualizarEstoques()
+    {
+        var pecas = RepositorioTechToys.ListarTodos<Peca>() ?? new();
+        var materias = RepositorioTechToys.ListarTodos<MateriaPrima>() ?? new();
+        embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+        estoquesPecas = pecas.ToDictionary(x => x.Id, x => RepositorioTechToys.ObterQuantidadeEstoque<Peca>(x.Id));
+        estoquesMaterias = materias.ToDictionary(x => x.Id, x => RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(x.Id));
+        estoquesEmbalagens = embalagens.ToDictionary(x => x.Id, x => RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(x.Id));
+        CalcularCapacidade();
+    }
+    private void SelecionarProduto(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out produtoId);
+        produto = produtoId > 0 ? RepositorioTechToys.ObterPorId<Produto>(produtoId) : null;
+        CalcularCapacidade();
+    }
+    private void SelecionarEmbalagem(ChangeEventArgs e)
+    {
+        int.TryParse(e.Value?.ToString(), out embalagemId);
+        CalcularCapacidade();
+    }
+    private void CalcularCapacidade()
+    {
+        if (produto is null || produto.Composicao.Count == 0) { CapacidadeMaxima = 0; return; }
+        // Busca por busca binária: peças em estoque cobrem parte da receita; o restante exige matéria-prima.
+        bool Viavel(int unidades)
+        {
+            if (embalagemId > 0 && estoquesEmbalagens.GetValueOrDefault(embalagemId) < unidades) return false;
+            var consumoMaterias = new Dictionary<int, double>();
+            foreach (var comp in produto.Composicao)
+            {
+                var peca = comp.Peca;
+                if (!peca.Ativo) return false;
+                var demanda = (decimal)unidades * comp.Quantidade;
+                var saldoPeca = estoquesPecas.GetValueOrDefault(peca.Id);
+                var faltante = Math.Max(0m, demanda - saldoPeca);
+                if (faltante <= 0) continue;
+                if (peca.MateriasPrimas.Count == 0)
+                {
+                    if (peca.Materia_Prima is null || peca.Peso_Impressao <= 0) return false;
+                    consumoMaterias[peca.Materia_Prima.Id] = consumoMaterias.GetValueOrDefault(peca.Materia_Prima.Id) + (double)faltante * peca.Peso_Impressao;
+                }
+                else foreach (var mp in peca.MateriasPrimas)
+                    consumoMaterias[mp.MateriaPrimaId] = consumoMaterias.GetValueOrDefault(mp.MateriaPrimaId) + (double)faltante * mp.Peso;
+            }
+            foreach (var item in consumoMaterias)
+                if (estoquesMaterias.GetValueOrDefault(item.Key) < (decimal)item.Value) return false;
+            return true;
+        }
+        int baixo = 0, alto = 1;
+        while (alto < 100000 && Viavel(alto)) alto *= 2;
+        while (baixo + 1 < alto) { var meio = baixo + (alto - baixo) / 2; if (Viavel(meio)) baixo = meio; else alto = meio; }
+        CapacidadeMaxima = baixo;
+    }
+    private List<LinhaReceita> MontarLinhas()
+    {
+        var linhas = new List<LinhaReceita>();
+        if (produto is null) return linhas;
+        foreach (var comp in produto.Composicao)
+        {
+            var demandaPecas = QuantidadeSolicitada * comp.Quantidade;
+            var estoquePecas = estoquesPecas.GetValueOrDefault(comp.PecaId);
+            linhas.Add(new LinhaReceita($"Peça: {comp.Peca.Nome}", demandaPecas, (double)estoquePecas, "un.", estoquePecas >= demandaPecas ? "Atendido pelo estoque de peças" : $"Faltam {Math.Max(0, demandaPecas - (int)estoquePecas)}; fabricar com matéria-prima"));
+            var faltante = Math.Max(0, demandaPecas - (int)estoquePecas);
+            IEnumerable<(int Id, string Nome, double Peso)> mps;
+            if (comp.Peca.MateriasPrimas.Count > 0)
+                mps = comp.Peca.MateriasPrimas.Select(x => (x.MateriaPrimaId, x.MateriaPrima.Nome, x.Peso));
+            else if (comp.Peca.Materia_Prima is not null)
+                mps = new[] { (comp.Peca.Materia_Prima.Id, comp.Peca.Materia_Prima.Nome, comp.Peca.Peso_Impressao) };
+            else
+                mps = Enumerable.Empty<(int, string, double)>();
+            foreach (var mp in mps)
+            {
+                var necessario = faltante * mp.Peso;
+                var disponivel = estoquesMaterias.GetValueOrDefault(mp.Id);
+                var existente = linhas.FindIndex(x => x.Nome == $"Matéria-prima: {mp.Nome}");
+                if (existente >= 0) linhas[existente].Necessario += necessario;
+                else linhas.Add(new LinhaReceita($"Matéria-prima: {mp.Nome}", necessario, (double)disponivel, "g", ""));
+            }
+        }
+        foreach (var mpLinha in linhas.Where(x => x.Nome.StartsWith("Matéria-prima:", StringComparison.Ordinal)))
+            mpLinha.Status = mpLinha.Disponivel >= mpLinha.Necessario ? "Disponível" : $"Faltam {(mpLinha.Necessario - mpLinha.Disponivel):N3} g";
+        var emb = embalagens.FirstOrDefault(x => x.Id == embalagemId);
+        if (emb is not null)
+        {
+            var saldoEmbalagem = estoquesEmbalagens.GetValueOrDefault(emb.Id);
+            linhas.Add(new LinhaReceita($"Embalagem: {emb.Nome}", QuantidadeSolicitada, (double)saldoEmbalagem, "un.", saldoEmbalagem >= QuantidadeSolicitada ? "Disponível" : $"Faltam {QuantidadeSolicitada - (int)saldoEmbalagem} unidades"));
+        }
+        return linhas;
+    }
+    private static string FormatarTempo(double minutos) => minutos <= 0 ? "Não informado" : TimeSpan.FromMinutes(minutos).TotalDays >= 1 ? TimeSpan.FromMinutes(minutos).ToString(@"d\d\ hh\h\ mm\m") : TimeSpan.FromMinutes(minutos).ToString(@"hh\h\ mm\m");
+    private sealed class LinhaReceita(string nome, double necessario, double disponivel, string unidade, string status)
+    { public string Nome { get; } = nome; public double Necessario { get; set; } = necessario; public double Disponivel { get; } = disponivel; public string Unidade { get; } = unidade; public string Status { get; set; } = status; }
+}
