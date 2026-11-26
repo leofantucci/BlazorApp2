@@ -1,0 +1,2094 @@
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #073B46;
+    color: white;
+}
+
+.corSecundaria {
+    background-color: #052F38;
+}
+
+/* Links padrão */
+a, .btn-link {
+    color: #006bb7;
+    text-decoration: none;
+}
+
+a.btn, a.btn:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ========================================================
+   1. BARRA LATERAL E MENU RESPONSIVO
+   ======================================================== */
+
+/* Checkbox invisível do menu mobile */
+input[type="checkbox"].navbar-toggler {
+    display: none !important;
+}
+
+/* Regras para Celular / Telas Pequenas */
+@media (max-width: 640.98px) {
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        min-height: unset !important;
+        position: static !important;
+        background-color: #052F38 !important;
+    }
+
+    .sidebar .top-row {
+        height: 65px !important;
+        min-height: 65px !important;
+        max-height: 65px !important;
+        padding-right: 1rem !important;
+    }
+
+    .sidebar a.navbar-brand {
+        font-size: 1.6rem !important;
+        padding-left: 0.5rem !important;
+    }
+
+    .nav-scrollable {
+        display: none;
+        background-color: #052F38;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    input[type="checkbox"].navbar-toggler:checked ~ .nav-scrollable {
+        display: block !important;
+    }
+
+    .faixaNinja {
+        height: 60px !important;
+        min-height: 60px !important;
+        font-size: 26px !important;
+        margin-bottom: 15px !important;
+    }
+
+    .card-personalizado,
+    .card-personalizado-2,
+    .blueprint,
+    .entrada {
+        width: 90% !important;
+        min-width: unset !important;
+    }
+
+    .blueprint-3 {
+        height: auto !important;
+        min-height: unset !important;
+        margin-top: 0 !important;
+        width: 90% !important;
+        padding-bottom: 20px !important;
+    }
+
+    .container-personalizado {
+        padding-top: 10px !important;
+        gap: 15px !important;
+    }
+}
+
+/* Regras para Desktop */
+@media (min-width: 641px) {
+    .sidebar {
+        background-color: #052F38 !important;
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        align-self: flex-start;
+    }
+
+    .nav-scrollable {
+        display: block !important;
+        background-color: #052F38 !important;
+        height: calc(100vh - 110px) !important;
+        overflow-y: auto;
+    }
+
+    .sidebar .top-row,
+    .sidebar .navbar,
+    .sidebar .navbar-brand {
+        height: 110px !important;
+        min-height: 110px !important;
+        max-height: 110px !important;
+        background-color: #073B46 !important;
+        display: flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .sidebar a.navbar-brand,
+    .top-row a.navbar-brand.navbar-texto-1 {
+        font-size: 2.2rem !important;
+        color: #ffffff !important;
+        line-height: normal !important;
+        font-weight: bolder !important;
+        margin: 0 !important;
+        padding-left: 1.5rem !important;
+    }
+
+    .faixaNinja {
+        height: 110px !important;
+        min-height: 110px !important;
+        max-height: 110px !important;
+        font-size: 55px !important;
+        margin-bottom: 30px !important;
+    }
+
+    .card-personalizado { width: 30%; }
+    .card-personalizado-2 { width: 15%; }
+    .card-personalizado-3 { width: 20%; }
+    .blueprint { width: 44%; }
+    .blueprint-3 { width: 77%; height: auto; }
+    .entrada { width: 30%; }
+}
+
+/* ========================================================
+   2. FAIXA NINJA BASE
+   ======================================================== */
+.faixaNinja {
+    background-color: #052F38 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    color: white !important;
+    font-weight: bolder !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* ========================================================
+   3. ESTRUTURA PRINCIPAL
+   ======================================================== */
+main > .top-row {
+    display: none !important;
+}
+
+main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+/* ========================================================
+   4. DEMAIS COMPONENTES
+   ======================================================== */
+.container-personalizado {
+    width: 95%;
+    max-width: 1400px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px;
+    margin: 0 auto;
+    padding-bottom: 40px;
+    padding-top: 2%;
+}
+
+.card { margin-top: 2%; }
+
+.card-personalizado {
+    cursor: pointer;
+    color: #fff;
+    background-color: #052F38;
+    border-color: #052F38;
+    min-width: 260px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 40px;
+    padding: 25px 15px;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+
+.card-personalizado-2, .card-personalizado-3 {
+    cursor: pointer;
+    color: #fff;
+    background-color: #052F38;
+    border-color: #052F38;
+    height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 50px;
+    padding-top: 25px;
+    font-weight: bold;
+    font-size: 12px;
+    padding-bottom: 2%;
+}
+
+.sera {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.container-personalizado-2 {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-top: 2%;
+    gap: 16px;
+}
+
+.tabela-container {
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+.tabela-container table { width: 100%; }
+
+.area-botoes {
+    margin-top: 20px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.centralizado {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+}
+
+.entrada {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 22px;
+    margin-bottom: 25px;
+}
+
+.blueprint {
+    margin-top: 2%;
+    background-color: #052F38;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    border-radius: 50px;
+    margin-bottom: 2%;
+}
+
+.blueprint-1 { padding-top: 22px; }
+.blueprint-2 { padding-top: 10px; padding-bottom: 5px; }
+.blueprint-3 { padding-top: 22px; }
+
+.texto-padrao-1 {
+    margin-top: 1%;
+    text-align: center;
+    color: #ffffff;
+    font-family: 'Helvetica Neue', Charcoal, sans-serif;
+    font-size: 24px;
+}
+
+.foto {
+    width: 70px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.foto-2, .foto-3 {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 30%;
+    height: auto;
+}
+
+.foto-4 {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 25%;
+    height: auto;
+}
+
+.foto-5 {
+    display: block;
+    width: 15%;
+    margin-right: 4%;
+    margin-left: -2%;
+    height: auto;
+}
+
+td, th {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.btn-primary {
+    width: auto;
+    font-size: 22px;
+    font-weight: bolder;
+    background: #00BFD8;
+    border-color: #00BFD8;
+    border-style: hidden;
+}
+
+.btn-primary:hover { background: #0097A9; }
+
+.btn-personalizado {
+    background-color: #052F38;
+    color: #fff;
+    border: 1px solid #ffffff;
+    width: 200px;
+    height: 75px;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 28px;
+}
+
+.btn-secondary {
+    width: auto;
+    height: auto;
+    border-color: #ffffff;
+    background-color: #052F38;
+    color: white !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-top: 3%;
+    
+}
+
+.btn-secondary:hover {
+    border-color: #052F38;
+    background-color: #ffffff;
+    color: #052F38 !important;
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.nav-item { align-items: center; }
+
+h1:focus { outline: none; }
+
+.valid.modified:not([type=checkbox]) { outline: 1px solid #26b050; }
+.invalid { outline: 1px solid #e50000; }
+.validation-message { color: #e50000; }
+.atalho_visualizar { color: deeppink; }
+
+/* ============================================================
+   TOPO / LOGO CENTRALIZADA
+   ============================================================ */
+.top-row {
+    position: relative;
+    min-height: 3.5rem;
+}
+
+.logo-topo {
+    display: block;
+    margin: 0 auto;
+    max-height: 48px;
+    width: auto;
+}
+
+.posicao-toggle-mobile {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+/* ============================================================
+   BOTÕES EXPANSÍVEIS (Atalhos e Placas NFC)
+   — Abordagem com :has() que NÃO depende da estrutura do DOM
+     gerada pelo AuthorizeView do Blazor.
+   ============================================================ */
+
+.atalhos-checkbox {
+    display: none;
+}
+
+.atalhos-conteudo {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+/* Quando o container tem #atalhos-checkbox marcado → expande SÓ o conteúdo de Atalhos */
+.nav-scrollable:has(#atalhos-checkbox:checked) .atalhos-conteudo-atalhos {
+    max-height: 1000px;
+}
+
+/* Quando o container tem #placasnfc-checkbox marcado → expande SÓ o conteúdo de Placas NFC */
+.nav-scrollable:has(#placasnfc-checkbox:checked) .atalhos-conteudo-placasnfc {
+    max-height: 1000px;
+}
+
+/* Fallback para navegadores antigos que não suportam :has() */
+@supports not (selector(:has(*))) {
+    .atalhos-checkbox:checked + .nav-item + .atalhos-conteudo {
+        max-height: 1000px;
+    }
+}
+
+/* Label clicável — centraliza ícone + texto + seta */
+.atalhos-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    user-select: none;
+    text-align: center;
+    width: 100%;
+}
+
+/* Ícone redondo (cadastrar.webp / PlacaIcon.webp) */
+.foto-botao {
+    height: 24px;
+    width: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.atalhos-texto {
+    line-height: 1.2;
+}
+
+.seta-atalhos {
+    transition: transform 0.3s ease;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Gira a seta de Atalhos quando #atalhos-checkbox está marcado */
+.nav-scrollable:has(#atalhos-checkbox:checked) .seta-atalhos-1 {
+    transform: rotate(180deg);
+}
+
+/* Gira a seta de Placas NFC quando #placasnfc-checkbox está marcado */
+.nav-scrollable:has(#placasnfc-checkbox:checked) .seta-atalhos-2 {
+    transform: rotate(180deg);
+}
+
+/* Fallback das setas */
+@supports not (selector(:has(*))) {
+    .atalhos-checkbox:checked + .nav-item .seta-atalhos {
+        transform: rotate(180deg);
+    }
+}
+
+/* Recuo dos subitens */
+.atalhos-conteudo .nav-item {
+    padding-left: 2rem !important;
+}
+
+/* ============================================================
+   REGRAS ORIGINAIS DO NAVBAR-TOGGLER
+   ============================================================ */
+.navbar-toggler {
+    appearance: none;
+    cursor: pointer;
+    width: 3.5rem;
+    height: 2.5rem;
+    color: white;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") no-repeat center/1.75rem rgba(255, 255, 255, 0.1);
+}
+
+.navbar-toggler:checked {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-scrollable {
+    display: none;
+}
+
+.navbar-toggler:checked ~ .nav-scrollable {
+    display: block;
+}
+
+@media (min-width: 641px) {
+    .navbar-toggler { display: none; }
+
+    .nav-scrollable {
+        display: block;
+        height: calc(100vh - 3.5rem);
+        overflow-y: auto;
+    }
+}
+
+
+/* ==========================================
+   NOVO DESIGN DA BARRA LATERAL
+   ========================================== */
+
+.sidebar {
+    background: #052F38 !important;
+}
+
+/* Área da navegação */
+.nav-scrollable {
+    background: #052F38 !important;
+    padding-top: 15px;
+    scrollbar-width: thin;
+    scrollbar-color: #087C82 #052F38;
+}
+
+/* Espaçamento dos itens */
+.nav-item {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Links principais */
+.menu-link {
+    display: flex !important;
+    align-items: center;
+    gap: 13px;
+    min-height: 48px;
+    padding: 11px 14px !important;
+    margin: 3px 0;
+    border-radius: 10px;
+    color: #D7E9EA !important;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* Ícones */
+.menu-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    min-width: 22px;
+    font-size: 19px;
+    color: #65D9D2;
+}
+
+/* Hover */
+.menu-link:hover,
+.submenu-link:hover {
+    background: #0A4851 !important;
+    color: #FFFFFF !important;
+}
+
+/* Item ativo */
+.menu-link.active,
+.submenu-link.active {
+    background: #087C82 !important;
+    color: #FFFFFF !important;
+    font-weight: 600;
+}
+
+.menu-link.active .menu-icon,
+.submenu-link.active .menu-icon {
+    color: #FFFFFF;
+}
+
+/* ==========================================
+   MENUS EXPANSÍVEIS
+   ========================================== */
+
+.nav-group {
+    width: 100%;
+}
+
+/* Remove a seta padrão do navegador */
+.nav-group > summary {
+    list-style: none;
+}
+
+.nav-group > summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Botão do submenu */
+.menu-toggle {
+    user-select: none;
+    justify-content: flex-start;
+}
+
+/* Seta do menu */
+.menu-arrow {
+    margin-left: auto;
+    font-size: 12px;
+    color: #91BFC0;
+    transition: transform 0.25s ease;
+}
+
+/* Rotação da seta */
+.nav-group[open] > .menu-toggle .menu-arrow {
+    transform: rotate(180deg);
+    color: #FFFFFF;
+}
+
+/* Destaque quando aberto */
+.nav-group[open] > .menu-toggle {
+    background: #0A4851;
+    color: #FFFFFF !important;
+}
+
+/* Conteúdo do submenu */
+.submenu {
+    margin: 5px 0 10px 12px;
+    padding: 5px 0 5px 10px;
+    border-left: 2px solid #087C82;
+    animation: submenuEntrada 0.2s ease;
+}
+
+/* Itens internos */
+.submenu-link {
+    display: flex !important;
+    align-items: center;
+    gap: 11px;
+    min-height: 42px;
+    padding: 9px 12px !important;
+    margin: 2px 0;
+    border-radius: 8px;
+    color: #BBD1D3 !important;
+    font-size: 13.5px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+}
+
+.submenu-link .menu-icon {
+    font-size: 16px;
+    color: #55BDB9;
+}
+
+/* Animação */
+@keyframes submenuEntrada {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   INFORMAÇÕES DO USUÁRIO
+   ========================================== */
+
+.usuario-info {
+    margin: 25px 15px 15px;
+    padding: 14px;
+    border: 1px solid rgba(101, 217, 210, 0.2);
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.12);
+    overflow-wrap: anywhere;
+}
+
+.usuario-info-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: #65D9D2;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.usuario-info p {
+    margin: 7px 0;
+    color: #BBD1D3;
+    font-size: 12px;
+}
+
+.usuario-info strong {
+    color: #FFFFFF;
+}
+
+/* ==========================================
+   AJUSTES PARA CELULAR
+   ========================================== */
+
+@media (max-width: 640.98px) {
+    .nav-scrollable {
+        max-height: 75vh;
+        overflow-y: auto;
+        padding-top: 10px;
+    }
+
+    .menu-link {
+        min-height: 46px;
+    }
+
+    .submenu-link {
+        min-height: 42px;
+    }
+}
+
+/* ==========================================
+   AJUSTES PARA DESKTOP
+   ========================================== */
+
+@media (min-width: 641px) {
+    .nav-scrollable {
+        height: calc(100vh - 110px) !important;
+        overflow-y: auto;
+    }
+}
+
+/* Campo numérico de quantidade: mantém o valor digitado legível no tema escuro. */
+.entrada.campo-quantidade {
+    color: #052F38 !important;
+    background-color: #FFFFFF !important;
+    border: 2px solid #00BFD8 !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    opacity: 1 !important;
+    min-height: 44px;
+}
+
+.entrada.campo-quantidade:focus {
+    color: #052F38 !important;
+    background-color: #FFFFFF !important;
+    outline: 2px solid #00BFD8;
+    outline-offset: 1px;
+}
+
+
+/* ========================================================
+   UX DE FORMULÁRIOS — campos legíveis e responsivos
+   ======================================================== */
+.blueprint .entrada,
+.form-field .entrada {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    margin: 0;
+    padding: 10px 13px;
+    border: 1px solid #9bbfc4;
+    border-radius: 10px;
+    background: #fff;
+    color: #173b42;
+    font-size: 16px;
+    line-height: 1.35;
+    text-align: left;
+    font-weight: 500;
+}
+
+.blueprint .entrada:focus,
+.form-field .entrada:focus {
+    border-color: #35c6ce;
+    outline: 3px solid rgba(53, 198, 206, .2);
+    outline-offset: 1px;
+    box-shadow: 0 0 0 .15rem rgba(53, 198, 206, .12);
+}
+
+.blueprint select.entrada,
+.form-field select.entrada {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    text-overflow: ellipsis;
+}
+
+.blueprint .form-field label {
+    display: block;
+    width: 100%;
+    margin: 0 0 7px;
+    color: #e6f4f5;
+    font-size: 14px;
+    font-weight: 650;
+    text-align: left;
+}
+
+.formulario-card {
+    width: min(94%, 1050px) !important;
+    max-width: 1050px;
+    align-items: stretch;
+    padding: clamp(18px, 3vw, 34px);
+    border: 1px solid rgba(101, 217, 210, .2);
+    border-radius: 22px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .18);
+    gap: 0;
+}
+
+.formulario-intro {
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,.13);
+}
+
+.formulario-intro h2,
+.formulario-secao h3 {
+    margin: 0 0 7px;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.formulario-intro p,
+.formulario-secao p {
+    margin: 0;
+    color: #bad3d6;
+    font-size: 14px;
+}
+
+.formulario-secao {
+    padding: 22px 0;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.formulario-secao:last-child {
+    border-bottom: 0;
+    padding-bottom: 4px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.form-field {
+    min-width: 0;
+    width: 100%;
+}
+
+.form-field-full {
+    grid-column: 1 / -1;
+}
+
+.form-section-heading,
+.materia-acoes,
+.formulario-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.form-count {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 20px;
+    background: rgba(53,198,206,.13);
+    color: #8de9e8;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.materia-linha {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(160px, .8fr) auto;
+    align-items: end;
+    gap: 14px;
+    margin-top: 15px;
+    padding: 16px;
+    border: 1px solid rgba(145, 210, 213, .22);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, .13);
+}
+
+.materia-select,
+.materia-peso {
+    min-width: 0;
+}
+
+.btn-remover-materia {
+    min-height: 44px;
+    white-space: nowrap;
+}
+
+.btn-remover-materia:disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.materia-acoes {
+    margin-top: 16px;
+}
+
+.peso-resumo {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 7px;
+    color: #c5dfe1;
+    font-size: 14px;
+}
+
+.peso-resumo strong {
+    color: #8de9e8;
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+}
+
+.form-help {
+    display: block;
+    margin-top: 12px;
+    color: #bad3d6;
+    line-height: 1.5;
+}
+
+.formulario-footer {
+    width: min(94%, 1050px);
+    justify-content: flex-start;
+    margin: 0 auto 35px;
+}
+
+.formulario-footer .btn {
+    min-height: 44px;
+    padding: 9px 20px;
+}
+
+.form-alert {
+    width: min(94%, 1050px);
+    margin: 16px auto 0;
+}
+
+@media (max-width: 700px) {
+    .form-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .form-field-full {
+        grid-column: auto;
+    }
+
+    .materia-linha {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+        padding: 13px;
+    }
+
+    .btn-remover-materia {
+        width: 100%;
+    }
+
+    .materia-acoes {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .peso-resumo {
+        justify-content: flex-start;
+    }
+
+    .formulario-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .formulario-footer .btn {
+        width: 100%;
+    }
+
+    .formulario-card {
+        width: 94% !important;
+        padding: 18px 15px;
+    }
+}
+
+/* ========================================================
+   DESIGN SYSTEM GLOBAL — GLASSMORPHISM TECHTOYS
+   Aplicado globalmente sem alterar rotas ou componentes.
+   ======================================================== */
+:root {
+    color-scheme: dark;
+    --tt-bg: #062f38;
+    --tt-bg-deep: #04252d;
+    --tt-surface: rgba(5, 47, 56, .78);
+    --tt-surface-strong: rgba(5, 47, 56, .94);
+    --tt-surface-soft: rgba(12, 75, 84, .52);
+    --tt-border: rgba(130, 220, 218, .20);
+    --tt-border-strong: rgba(101, 217, 210, .38);
+    --tt-accent: #65d9d2;
+    --tt-accent-strong: #00bfd8;
+    --tt-text: #f2fbfb;
+    --tt-muted: #b7d2d5;
+    --tt-shadow: 0 18px 48px rgba(0, 12, 17, .28);
+}
+
+html { min-height: 100%; background: var(--tt-bg-deep); }
+body {
+    min-height: 100vh;
+    color: var(--tt-text);
+    background:
+        radial-gradient(ellipse at 12% 8%, rgba(0, 191, 216, .14), transparent 34%),
+        radial-gradient(ellipse at 88% 82%, rgba(8, 126, 139, .22), transparent 38%),
+        linear-gradient(135deg, #062f38 0%, #073b46 48%, #042a33 100%);
+    background-attachment: fixed;
+    font-family: Inter, "Segoe UI", Helvetica, Arial, sans-serif;
+    letter-spacing: .005em;
+}
+
+.page { min-height: 100vh; background: transparent; }
+main { min-width: 0; background: transparent; }
+main > article { min-width: 0; }
+.content {
+    min-height: 100%;
+    padding: clamp(16px, 2.2vw, 32px) !important;
+    align-items: stretch;
+}
+
+/* Cabeçalhos de páginas */
+.faixaNinja {
+    position: relative;
+    min-height: 76px !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 17px 24px !important;
+    margin: 0 0 22px !important;
+    border: 1px solid var(--tt-border);
+    border-radius: 18px;
+    background: linear-gradient(110deg, rgba(5,47,56,.94), rgba(8,83,94,.82)) !important;
+    box-shadow: 0 12px 30px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-size: clamp(21px, 2vw, 30px) !important;
+    line-height: 1.25;
+    text-align: center;
+}
+.faixaNinja p { margin: 0; }
+
+/* Superfícies e cartões */
+.blueprint,
+.card-personalizado,
+.card-personalizado-2,
+.card-personalizado-3,
+.card:not(.table),
+.formulario-card,
+.tabela-container,
+.usuario-info {
+    color: var(--tt-text);
+    background: linear-gradient(145deg, rgba(8, 68, 78, .78), rgba(4, 42, 51, .88));
+    border: 1px solid var(--tt-border);
+    box-shadow: var(--tt-shadow), inset 0 1px 0 rgba(255,255,255,.055);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+.blueprint {
+    border-radius: 24px;
+    padding: clamp(20px, 3vw, 34px);
+    margin: 18px auto 28px;
+    max-width: min(96%, 1440px);
+}
+.card-personalizado,
+.card-personalizado-2,
+.card-personalizado-3 {
+    border-radius: 20px;
+    padding: 24px 18px;
+    min-height: 150px;
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+}
+.card-personalizado:hover,
+.card-personalizado-2:hover,
+.card-personalizado-3:hover {
+    transform: translateY(-4px);
+    border-color: var(--tt-border-strong);
+    background: linear-gradient(145deg, rgba(9, 91, 101, .9), rgba(5, 52, 62, .96));
+    box-shadow: 0 22px 44px rgba(0,0,0,.3), 0 0 0 1px rgba(101,217,210,.08);
+}
+
+/* Cards coloridos (text-bg-*) mantêm as cores originais do Bootstrap,
+   evitando que o gradiente escuro cubra o fundo e derrube o contraste. */
+.card[class*="text-bg-"] { background-image: none; }
+.card[class*="text-bg-"] small,
+.card[class*="text-bg-"] .text-muted {
+    color: inherit !important;
+    opacity: .85;
+}
+
+/* Superfícies auxiliares do Bootstrap (bg-body-*, bg-light) no tema escuro:
+   sem isso o fundo fica claro e o texto branco/muted desaparece. */
+.bg-body,
+.bg-body-secondary,
+.bg-body-tertiary,
+.bg-light {
+    color: var(--tt-text) !important;
+    background-color: rgba(255, 255, 255, .06) !important;
+    border: 1px solid var(--tt-border);
+}
+.container-personalizado,
+.container-personalizado-2 {
+    width: min(96%, 1500px);
+    max-width: 1500px;
+    margin-inline: auto;
+    padding-top: 20px;
+    gap: 20px;
+}
+.centralizado { gap: 0; padding: 0 clamp(12px, 2vw, 28px) 28px; }
+
+/* Tipografia e hierarquia */
+h1, h2, h3, h4, h5, h6 { color: var(--tt-text); font-weight: 700; letter-spacing: -.02em; }
+p, .texto-padrao-1 { color: var(--tt-muted); }
+.texto-padrao-1 { font-size: clamp(17px, 1.5vw, 22px); }
+small, .form-text, .text-muted { color: var(--tt-muted) !important; }
+
+/* Formulários globais */
+label, .form-label { color: #e4f5f5; font-weight: 600; margin-bottom: 7px; }
+input:not([type=checkbox]):not([type=radio]):not([type=submit]),
+select,
+textarea,
+.form-control,
+.form-select {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 13px;
+    color: #173b42;
+    background: rgba(248, 253, 253, .97);
+    border: 1px solid rgba(150, 202, 205, .72);
+    border-radius: 11px;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: inset 0 1px 2px rgba(5,47,56,.04);
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+textarea { min-height: 110px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: #718d91; opacity: 1; }
+input:focus, select:focus, textarea:focus,
+.form-control:focus, .form-select:focus {
+    color: #123940;
+    background: #fff;
+    border-color: var(--tt-accent-strong);
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(0,191,216,.18), 0 0 0 1px rgba(0,191,216,.22);
+}
+input[type=checkbox], input[type=radio], .form-check-input {
+    accent-color: var(--tt-accent-strong);
+}
+.form-check-label { color: var(--tt-muted); }
+.validation-message, .text-danger { color: #ffb4b4 !important; }
+.text-success { color: #7ee7bb !important; }
+.text-secondary { color: #c3d9db !important; }
+.valid.modified:not([type=checkbox]) { outline: 1px solid #48d597; }
+.invalid, input.input-validation-error, select.input-validation-error, textarea.input-validation-error {
+    border-color: #ff8585 !important;
+    box-shadow: 0 0 0 3px rgba(255,90,90,.13) !important;
+}
+.entrada { margin-bottom: 0; font-size: 16px; }
+.blueprint .entrada, .form-field .entrada { min-height: 46px; }
+
+/* Botões */
+.btn {
+    min-height: 40px;
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: .01em;
+    transition: transform .16s ease, box-shadow .16s ease, background .16s ease, border-color .16s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn-primary, .btn-personalizado {
+    color: #042f37 !important;
+    background: linear-gradient(120deg, #65d9d2, #00bfd8) !important;
+    border: 1px solid rgba(101,217,210,.8) !important;
+    box-shadow: 0 8px 20px rgba(0,191,216,.18);
+}
+.btn-primary:hover, .btn-personalizado:hover {
+    color: #032b33 !important;
+    background: linear-gradient(120deg, #8ce9e2, #35d0e1) !important;
+    box-shadow: 0 10px 24px rgba(0,191,216,.26);
+}
+.btn-personalizado { width: auto; height: auto; min-height: 44px; margin-bottom: 0; font-size: 15px; padding: 10px 20px; }
+.btn-secondary {
+    color: #e8f7f7 !important;
+    background: rgba(255,255,255,.07) !important;
+    border: 1px solid rgba(190,226,228,.28) !important;
+    font-size: 14px;
+    margin-top: 0;
+}
+.btn-secondary:hover { color: #fff !important; background: rgba(255,255,255,.14) !important; border-color: var(--tt-border-strong) !important; }
+.btn-outline-info, .btn-outline-primary { color: var(--tt-accent) !important; border-color: var(--tt-border-strong) !important; }
+.btn-outline-info:hover, .btn-outline-primary:hover { color: #052f38 !important; background: var(--tt-accent) !important; }
+.btn:focus-visible, a:focus-visible, button:focus-visible { outline: 3px solid rgba(0,191,216,.55); outline-offset: 2px; }
+
+/* Tabelas e listagens */
+.tabela-container {
+    width: min(96%, 1500px);
+    margin: 18px auto 28px;
+    padding: 12px;
+    border-radius: 18px;
+    overflow-x: auto;
+}
+table, .table {
+    width: 100%;
+    margin-bottom: 0;
+    color: #e8f5f5;
+    border-color: rgba(150,210,212,.14);
+    vertical-align: middle;
+}
+.table > :not(caption) > * > * { padding: 12px 14px; color: inherit; background: transparent; border-bottom-color: rgba(150,210,212,.14); }
+thead th, .table thead th, th {
+    color: #8de9e8 !important;
+    background: rgba(0,0,0,.15) !important;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+tbody tr { transition: background .15s ease; }
+tbody tr:hover { background: rgba(101,217,210,.065); }
+td { color: #e2f0f1; }
+.tabela-container a { color: #79e4e0; }
+
+/* Alertas, badges, paginação e elementos Bootstrap */
+.alert { border-radius: 12px; border: 1px solid transparent; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+.alert-danger { color: #ffe3e3; background: rgba(139,35,48,.35); border-color: rgba(255,130,140,.3); }
+.alert-success { color: #d9fff0; background: rgba(24,116,83,.3); border-color: rgba(100,220,170,.3); }
+.alert-info { color: #dffbff; background: rgba(0,125,145,.25); border-color: rgba(101,217,210,.28); }
+.badge { letter-spacing: .02em; }
+.modal-content, .dropdown-menu, .popover, .offcanvas {
+    color: var(--tt-text);
+    background: rgba(5,47,56,.96);
+    border: 1px solid var(--tt-border);
+    border-radius: 16px;
+    box-shadow: var(--tt-shadow);
+    backdrop-filter: blur(18px);
+}
+.dropdown-item { color: #dff1f2; }
+.dropdown-item:hover { color: #fff; background: rgba(101,217,210,.13); }
+
+/* Navegação lateral */
+.sidebar {
+    z-index: 20;
+    flex: 0 0 250px;
+    background: linear-gradient(180deg, rgba(4,37,45,.98), rgba(5,47,56,.96)) !important;
+    border-right: 1px solid rgba(101,217,210,.14);
+    box-shadow: 10px 0 34px rgba(0,0,0,.12);
+    backdrop-filter: blur(18px);
+}
+.sidebar .top-row, .sidebar .navbar, .sidebar .navbar-brand {
+    background: transparent !important;
+}
+.sidebar .top-row { border-bottom: 1px solid rgba(101,217,210,.12); }
+.nav-scrollable { background: transparent !important; padding: 14px 8px 20px; }
+.nav-item { padding-left: 8px !important; padding-right: 8px !important; }
+.menu-link { border: 1px solid transparent; }
+.menu-link.active, .submenu-link.active {
+    background: linear-gradient(100deg, rgba(0,191,216,.23), rgba(8,126,139,.22)) !important;
+    border-color: rgba(101,217,210,.24);
+    box-shadow: inset 3px 0 0 var(--tt-accent);
+}
+.submenu { border-left-color: rgba(101,217,210,.42); }
+.usuario-info { background: rgba(255,255,255,.045); }
+.usuario-info p { color: #c6dddf !important; background: transparent !important; border: 0 !important; min-height: 0; text-align: left !important; font-size: 12px; }
+
+/* Conteúdo de login e páginas públicas */
+.pagina-formulario { width: 100%; }
+.pagina-formulario > .blueprint { width: min(94%, 1050px); }
+.centralizado > .blueprint:not(.formulario-card) { width: min(94%, 1050px); }
+.login-container, .login-card, .card-login {
+    color: var(--tt-text);
+    background: linear-gradient(145deg, rgba(8,68,78,.82), rgba(4,42,51,.92));
+    border: 1px solid var(--tt-border);
+    border-radius: 24px;
+    box-shadow: var(--tt-shadow);
+    backdrop-filter: blur(18px);
+}
+
+/* Imagens e ícones em cards */
+.foto, .foto-2, .foto-3, .foto-4, .foto-5 { object-fit: contain; }
+
+/* Centraliza o conjunto de cards da visão geral na área útil. */
+.visao-geral-cards {
+    width: 100% !important;
+    max-width: 1500px;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+    align-items: stretch;
+    box-sizing: border-box;
+}
+
+/* Responsividade global */
+@media (min-width: 641px) {
+    .page { flex-direction: row; }
+    .sidebar { width: 250px; min-width: 250px; }
+    main { width: calc(100% - 250px); }
+    main > article { padding: 0 !important; }
+    .content { padding: clamp(20px, 2.4vw, 38px) !important; }
+}
+@media (max-width: 640.98px) {
+    .sidebar { width: 100% !important; min-width: 0; border-right: 0; border-bottom: 1px solid var(--tt-border); }
+    .sidebar .top-row { height: 66px !important; min-height: 66px !important; max-height: 66px !important; }
+    .sidebar .top-row, .sidebar .navbar, .sidebar .navbar-brand { height: 66px !important; min-height: 66px !important; max-height: 66px !important; }
+    .nav-scrollable { max-height: 72vh; }
+    .faixaNinja { min-height: 62px !important; margin-bottom: 16px !important; padding: 13px 16px !important; font-size: 21px !important; }
+    .centralizado { padding-left: 10px; padding-right: 10px; }
+    .blueprint { width: 100% !important; max-width: 100%; border-radius: 18px; padding: 18px 14px; }
+    .container-personalizado, .container-personalizado-2 { width: 100%; padding-top: 12px; gap: 13px; }
+    .card-personalizado, .card-personalizado-2, .card-personalizado-3 { width: 100% !important; min-width: 0; border-radius: 16px; }
+    .tabela-container { width: 100%; padding: 8px; border-radius: 14px; }
+    .table > :not(caption) > * > * { padding: 9px 10px; }
+    .btn-personalizado { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+
+/* ========================================================
+   PADRÃO DE UX DOS FORMULÁRIOS — baseado em Peças/Cadastro
+   Aplicado apenas às telas de cadastro e edição de registros.
+   ======================================================== */
+.pagina-formulario {
+    width: 100%;
+    gap: 0;
+}
+.pagina-formulario > .faixaNinja {
+    width: min(94%, 1050px);
+    margin-left: auto;
+    margin-right: auto;
+}
+.pagina-formulario > .formulario-card,
+.pagina-formulario > .form-edit-card {
+    width: min(94%, 1050px) !important;
+    max-width: 1050px;
+    margin: 0 auto 18px;
+}
+.pagina-formulario .formulario-card .texto-padrao-1,
+.pagina-formulario .form-edit-card .texto-padrao-1 {
+    display: block;
+    margin: 10px 0 6px;
+    text-align: left;
+    font-weight: 650;
+}
+.pagina-formulario .formulario-card .entrada,
+.pagina-formulario .form-edit-card .entrada,
+.pagina-formulario .formulario-card .form-control,
+.pagina-formulario .form-edit-card .form-control {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+.pagina-formulario .formulario-card input.entrada,
+.pagina-formulario .formulario-card select.entrada,
+.pagina-formulario .form-edit-card input.form-control,
+.pagina-formulario .form-edit-card select.form-control {
+    margin-bottom: 8px;
+}
+.pagina-formulario > .formulario-footer,
+.pagina-formulario > .d-flex.justify-content-center,
+.pagina-formulario > .d-flex.flex-wrap {
+    width: min(94%, 1050px);
+    margin: 0 auto 30px;
+    padding-top: 8px;
+    gap: 12px;
+}
+.pagina-formulario > .btn {
+    margin-top: 12px;
+    margin-bottom: 8px;
+    min-height: 44px;
+}
+.pagina-formulario .form-edit-card .btn {
+    min-height: 42px;
+    margin-top: 8px;
+}
+.pagina-formulario .produto-card {
+    color: #e6f4f5;
+    background: linear-gradient(145deg, rgba(8,68,78,.78), rgba(4,42,51,.88));
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 20px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.16);
+}
+.pagina-formulario .produto-card h5,
+.pagina-formulario .produto-card h4 {
+    color: #fff;
+    font-weight: 700;
+}
+.pagina-formulario .produto-card label {
+    color: #e6f4f5;
+}
+.pagina-formulario .produto-card .text-muted,
+.pagina-formulario .produto-card .estoque-hint {
+    color: #bad3d6 !important;
+}
+.pagina-formulario .produto-card .composicao-table th {
+    color: #e6f4f5;
+}
+.pagina-formulario .produto-card .composicao-table td {
+    color: #d5e8e9;
+}
+.pagina-formulario .form-alert,
+.pagina-formulario > .alert {
+    width: min(94%, 1050px);
+    margin: 12px auto 16px;
+}
+@media (max-width: 700px) {
+    .pagina-formulario > .formulario-card,
+    .pagina-formulario > .form-edit-card,
+    .pagina-formulario .produto-card {
+        width: 94% !important;
+        padding: 18px 15px;
+        border-radius: 18px;
+    }
+    .pagina-formulario > .formulario-footer,
+    .pagina-formulario > .d-flex.justify-content-center,
+    .pagina-formulario > .d-flex.flex-wrap {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .pagina-formulario > .formulario-footer .btn,
+    .pagina-formulario > .d-flex .btn,
+    .pagina-formulario > .btn {
+        width: 100%;
+    }
+}
+
+/* ========================================================
+   CORREÇÃO DE CONTRASTE — CARTÕES E ALERTAS CLAROS
+   O Bootstrap traz superfícies claras por padrão, mas o tema
+   usa texto claro. Estas regras mantêm tudo legível no escuro.
+   ======================================================== */
+
+/* Métricas da Calculadora de Produção */
+.calculadora-metrica {
+    color: var(--tt-text);
+    background: rgba(101, 217, 210, .10);
+    border: 1px solid var(--tt-border-strong);
+    border-radius: 12px;
+}
+
+.calculadora-metrica small { color: var(--tt-muted) !important; }
+
+.calculadora-metrica h3,
+.calculadora-metrica h4 { color: inherit; }
+
+/* Utilitários de fundo claro do Bootstrap dentro do tema escuro */
+.bg-body-secondary,
+.bg-body-tertiary,
+.bg-light {
+    color: var(--tt-text) !important;
+    background: rgba(12, 75, 84, .62) !important;
+}
+
+/* Alertas de aviso e secundário: fundo escuro com texto claro */
+.alert-warning {
+    color: #fff2cf;
+    background: rgba(173, 123, 16, .32);
+    border-color: rgba(255, 199, 82, .38);
+}
+
+.alert-secondary {
+    color: #e8f2f3;
+    background: rgba(108, 117, 125, .30);
+    border-color: rgba(184, 204, 208, .30);
+}
+
+.alert-warning .alert-link,
+.alert-secondary .alert-link { color: #ffffff; }
+
+/* Rodapés/linhas .table-secondary deixam de ficar claros */
+.table-secondary > :not(caption) > * > *,
+.table-secondary > tr > * {
+    color: #e8f5f5 !important;
+    background-color: rgba(101, 217, 210, .09) !important;
+    box-shadow: none !important;
+    border-color: rgba(150, 210, 212, .18) !important;
+}
+
+/* Cartões coloridos (text-bg-*): o conteúdo herda a cor do cartão */
+.card[class*="text-bg-"] small,
+.card[class*="text-bg-"] p,
+.card[class*="text-bg-"] h1,
+.card[class*="text-bg-"] h2,
+.card[class*="text-bg-"] h3,
+.card[class*="text-bg-"] h4,
+.card[class*="text-bg-"] h5,
+.card[class*="text-bg-"] h6 { color: inherit !important; }
+
+/* Valores de lucro/positivos legíveis sobre o fundo escuro */
+.text-success { color: #7ee2b8 !important; }
+
+
+/* ========================================================
+   PLACAS NFC — ajustes pontuais de layout e responsividade
+   ======================================================== */
+.placa-nfc-config-page,
+.placas-nfc-admin-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.placa-nfc-config-page > .faixaNinja,
+.placa-nfc-config-page > .formulario-card,
+.placa-nfc-config-page > .formulario-footer,
+.placas-nfc-admin-page > .faixaNinja,
+.placas-nfc-admin-page > .formulario-card,
+.placas-nfc-admin-page > .form-alert,
+.placas-nfc-admin-page > .formulario-footer {
+    width: min(96%, 1240px) !important;
+    max-width: 1240px;
+}
+
+.placa-nfc-config-page .formulario-card,
+.placas-nfc-admin-page .formulario-card {
+    padding: clamp(20px, 3vw, 36px);
+}
+
+.placa-nfc-config-page .formulario-intro,
+.placas-nfc-admin-page .formulario-intro {
+    margin-bottom: 26px;
+}
+
+.placa-nfc-config-page .formulario-intro h2,
+.placas-nfc-admin-page .formulario-intro h2 {
+    margin-bottom: 12px;
+    line-height: 1.25;
+}
+
+.placa-nfc-config-page .formulario-intro p,
+.placas-nfc-admin-page .formulario-intro p {
+    max-width: 850px;
+    line-height: 1.65;
+    margin-bottom: 0;
+}
+
+.placa-nfc-config-page .formulario-secao,
+.placas-nfc-admin-page .formulario-secao {
+    margin-top: 22px;
+}
+
+.placa-nfc-config-page .formulario-footer,
+.placas-nfc-admin-page .formulario-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 18px auto 30px;
+    padding: 12px 0;
+}
+
+.placa-nfc-config-page .formulario-footer .btn,
+.placas-nfc-admin-page .formulario-footer .btn {
+    min-width: 170px;
+}
+
+.placa-nfc-config-page .form-field,
+.placas-nfc-admin-page .form-field {
+    min-width: 0;
+    margin-bottom: 8px;
+}
+
+.placa-nfc-config-page .form-label,
+.placas-nfc-admin-page .form-label {
+    display: block;
+    line-height: 1.4;
+    margin-bottom: 9px;
+}
+
+.placa-nfc-config-page .form-help {
+    display: block;
+    margin-top: 9px;
+    line-height: 1.5;
+}
+
+.placa-nfc-paleta-dialog {
+    width: min(1100px, calc(100vw - 28px));
+    max-width: 1100px;
+    margin: 14px auto;
+}
+
+.placa-nfc-paleta-dialog .modal-content {
+    max-height: calc(100dvh - 28px);
+    overflow: hidden;
+}
+
+.placa-nfc-paleta-dialog .modal-header,
+.placa-nfc-paleta-dialog .modal-footer {
+    padding: 18px 22px;
+    gap: 12px;
+}
+
+.placa-nfc-paleta-dialog .modal-body {
+    padding: 22px;
+    overflow-y: auto;
+}
+
+.placa-nfc-paleta-dialog .modal-body > p {
+    margin: 0 0 20px;
+    line-height: 1.6;
+}
+
+.placa-nfc-paleta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr));
+    gap: 14px;
+    align-items: stretch;
+}
+
+.placa-nfc-paleta-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    min-height: 92px;
+    padding: 14px;
+    text-align: left;
+    color: var(--tt-text, #e8f5f5);
+    background: rgba(255,255,255,.055);
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.placa-nfc-paleta-item:hover {
+    background: rgba(101,217,210,.12);
+    border-color: var(--tt-border-strong, rgba(101,217,210,.5));
+    transform: translateY(-2px);
+}
+
+.placa-nfc-icone-preview {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    overflow: hidden;
+    border-radius: 12px;
+    background: rgba(101,217,210,.12);
+    border: 1px solid rgba(101,217,210,.2);
+}
+
+.placa-nfc-icone-preview img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 7px;
+    object-fit: contain;
+}
+
+.placa-nfc-icone-fallback {
+    font-size: 17px;
+    font-weight: 750;
+    line-height: 1;
+    color: var(--tt-accent, #65d9d2);
+}
+
+.placa-nfc-paleta-texto {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    line-height: 1.4;
+}
+
+.placa-nfc-paleta-texto strong {
+    color: var(--tt-text, #e8f5f5);
+    overflow-wrap: anywhere;
+}
+
+.placa-nfc-paleta-texto small {
+    display: block;
+    color: var(--tt-muted, #bad3d6) !important;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.placa-nfc-editor-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 24px 0 18px;
+}
+
+.placa-nfc-editor-topo h5 { margin-bottom: 8px; }
+.placa-nfc-editor-topo p { line-height: 1.55; }
+
+.placa-nfc-editor-card {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 16px;
+    background: rgba(255,255,255,.045);
+}
+
+.placa-nfc-editor-card-campos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 16px;
+    min-width: 0;
+}
+
+.placa-nfc-editor-card-campos .form-field { min-width: 0; margin: 0; }
+.placa-nfc-editor-card-campos .form-field:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.placa-nfc-editor-card-acoes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+}
+.placa-nfc-editor-card-acoes .btn { white-space: nowrap; }
+
+.placa-nfc-editor-senha {
+    margin-top: 26px;
+    padding: 22px;
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 16px;
+    background: rgba(255,255,255,.04);
+}
+.placa-nfc-editor-senha h5 { margin-bottom: 10px; }
+.placa-nfc-editor-senha p { margin-bottom: 18px; line-height: 1.5; }
+
+.placa-nfc-editor-footer {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--tt-border, rgba(101,217,210,.2));
+}
+
+.placas-nfc-admin-page .placas-nfc-acoes {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+    gap: 8px;
+    min-width: 150px;
+}
+.placas-nfc-admin-page .placas-nfc-acoes .btn { white-space: nowrap; }
+.placas-nfc-admin-page .placa-nfc-url-tabela {
+    display: block;
+    max-width: 230px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+}
+.placas-nfc-admin-page .table td { vertical-align: middle; }
+.placas-nfc-admin-page .tabela-container { width: min(96%, 1500px); }
+
+.placas-nfc-menu {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: wrap;
+}
+.placas-nfc-menu .card-personalizado-3 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-width: min(100%, 220px);
+    text-align: center;
+}
+.placas-nfc-menu .foto-4 { width: 76px; height: 76px; object-fit: contain; }
+
+@media (max-width: 760px) {
+    .placa-nfc-paleta-dialog {
+        width: calc(100vw - 16px);
+        margin: 8px auto;
+    }
+    .placa-nfc-paleta-dialog .modal-content { max-height: calc(100dvh - 16px); }
+    .placa-nfc-paleta-dialog .modal-header,
+    .placa-nfc-paleta-dialog .modal-footer,
+    .placa-nfc-paleta-dialog .modal-body { padding: 14px; }
+    .placa-nfc-paleta { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); gap: 10px; }
+    .placa-nfc-paleta-item { min-height: 76px; padding: 11px; gap: 11px; }
+    .placa-nfc-icone-preview { flex-basis: 42px; width: 42px; height: 42px; }
+    .placa-nfc-editor-card { grid-template-columns: 1fr; gap: 14px; padding: 15px; }
+    .placa-nfc-editor-card-icone { display: flex; justify-content: flex-start; }
+    .placa-nfc-editor-card-campos { grid-template-columns: 1fr; }
+    .placa-nfc-editor-card-campos .form-field:last-child:nth-child(odd) { grid-column: auto; }
+    .placa-nfc-editor-card-acoes { flex-direction: row; flex-wrap: wrap; }
+    .placa-nfc-editor-card-acoes .btn { flex: 1 1 auto; }
+    .placa-nfc-editor-senha { padding: 16px; }
+    .placa-nfc-editor-topo { align-items: stretch; }
+    .placa-nfc-editor-topo > .btn { width: 100%; }
+    .placa-nfc-editor-footer .btn { width: 100%; }
+    .placa-nfc-config-page .formulario-footer,
+    .placas-nfc-admin-page .formulario-footer { flex-direction: column; align-items: stretch; }
+    .placa-nfc-config-page .formulario-footer .btn,
+    .placas-nfc-admin-page .formulario-footer .btn { width: 100%; }
+    .placas-nfc-menu .card-personalizado-3 { min-width: 0; }
+}
+
+
+/* Experiência pública e ativação da placa NFC */
+.placa-nfc-publica {
+    width: min(100% - 32px, 760px);
+    margin: clamp(22px, 5vh, 56px) auto;
+    padding: clamp(20px, 4vw, 36px);
+    color: var(--tt-text, #e8f5f5);
+    background: linear-gradient(145deg, rgba(8,68,78,.82), rgba(4,42,51,.94));
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 24px;
+    box-shadow: var(--tt-shadow, 0 18px 50px rgba(0,0,0,.24));
+    min-width: 0;
+}
+.placa-nfc-cabecalho {
+    text-align: center;
+    margin-bottom: 28px;
+}
+.placa-nfc-cabecalho h1 {
+    margin: 12px 0 10px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+.placa-nfc-cabecalho p {
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+.placa-nfc-avatar {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 14px;
+    border-radius: 18px;
+    color: #05363e;
+    background: linear-gradient(135deg, #8ce9e2, #00bfd8);
+    font-size: 25px;
+    font-weight: 800;
+}
+.placa-nfc-form {
+    display: grid;
+    gap: 18px;
+}
+.placa-nfc-form .form-field { margin: 0; }
+.placa-nfc-lista {
+    display: grid;
+    gap: 12px;
+}
+.placa-nfc-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+    padding: 15px 17px;
+    color: var(--tt-text, #e8f5f5);
+    text-decoration: none;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--tt-border, rgba(101,217,210,.2));
+    border-radius: 16px;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.placa-nfc-card:hover {
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+    background: rgba(101,217,210,.12);
+    border-color: var(--tt-border-strong, rgba(101,217,210,.5));
+}
+.placa-nfc-card-icone {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    overflow: hidden;
+    border-radius: 13px;
+    background: rgba(101,217,210,.12);
+}
+.placa-nfc-card-icone img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 7px;
+    object-fit: contain;
+}
+.placa-nfc-card-texto {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    line-height: 1.45;
+}
+.placa-nfc-card-texto strong { overflow-wrap: anywhere; }
+.placa-nfc-card-texto span {
+    color: var(--tt-muted, #bad3d6);
+    overflow-wrap: anywhere;
+}
+.placa-nfc-card-seta {
+    flex: 0 0 auto;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--tt-accent, #65d9d2);
+}
+.placa-nfc-rodape {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--tt-border, rgba(101,217,210,.2));
+}
+.placa-nfc-rodape a {
+    color: var(--tt-accent, #65d9d2);
+    text-decoration: none;
+}
+.placa-nfc-rodape a:hover { color: #fff; text-decoration: underline; }
+.placa-nfc-editor-card-box { width: 100%; max-width: 100%; }
+@media (max-width: 560px) {
+    .placa-nfc-publica {
+        width: calc(100% - 20px);
+        margin: 12px auto;
+        padding: 20px 15px;
+        border-radius: 18px;
+    }
+    .placa-nfc-card { gap: 12px; padding: 13px; }
+    .placa-nfc-card-icone { flex-basis: 42px; width: 42px; height: 42px; }
+    .placa-nfc-card-texto { font-size: 14px; }
+}
+
+
+/* Ajustes isolados da experiência pública NFC */
+.placa-nfc-publica-editor {
+    box-sizing: border-box;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-card-box {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+.placa-nfc-publica-editor .placa-nfc-editor {
+    width: 100%;
+    min-width: 0;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-topo {
+    align-items: center;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-card {
+    min-width: 0;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-card-campos .form-control {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-footer {
+    justify-content: flex-end;
+    margin-top: 22px;
+}
+.placa-nfc-publica-editor .placa-nfc-editor-footer .btn {
+    min-width: 190px;
+}
+.placa-nfc-publica .form-control {
+    min-height: 46px;
+    border-radius: 10px;
+}
+.placa-nfc-publica .btn {
+    min-height: 42px;
+    border-radius: 10px;
+}
+.placa-nfc-publica .placa-nfc-card:focus-visible,
+.placa-nfc-publica .btn:focus-visible,
+.placa-nfc-publica .form-control:focus-visible {
+    outline: 3px solid rgba(101, 217, 210, .55);
+    outline-offset: 2px;
+}
+.placa-nfc-publica .placa-nfc-card:focus-visible {
+    transform: none;
+}
+@media (max-width: 700px) {
+    .placa-nfc-publica-editor {
+        width: calc(100% - 24px);
+        padding: 20px 16px;
+        margin: 16px auto;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 16px;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card-icone {
+        justify-content: flex-start;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card-campos {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card-campos .form-field:last-child:nth-child(odd) {
+        grid-column: auto;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card-acoes {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-card-acoes .btn {
+        flex: 1 1 auto;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-footer {
+        justify-content: stretch;
+    }
+    .placa-nfc-publica-editor .placa-nfc-editor-footer .btn {
+        width: 100%;
+        min-width: 0;
+    }
+}

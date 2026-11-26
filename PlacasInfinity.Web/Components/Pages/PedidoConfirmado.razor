@@ -1,0 +1,41 @@
+@page "/pedido/{VendaId:int}"
+@inject IDbContextFactory<MyDBContext> ContextFactory
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Pedido recebido | Placas Infinity</PageTitle>
+<div class="store-shell confirmation-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a></header>
+    @if (_carregando)
+    {
+        <p class="store-message">Consultando pedido...</p>
+    }
+    else if (_venda is null)
+    {
+        <div class="empty-catalog"><h2>Pedido não encontrado</h2><a href="/">Voltar à loja</a></div>
+    }
+    else
+    {
+        <section class="confirmation-card">
+            <div class="confirmation-icon">✓</div>
+            <span class="eyebrow">PEDIDO REGISTRADO</span>
+            <h1>Obrigado pela compra!</h1>
+            <p>Seu pedido <strong>#@_venda.Id</strong> foi registrado e está aguardando pagamento.</p>
+            <div class="confirmation-details"><span>Status</span><strong>Aguardando pagamento</strong><span>Total</span><strong>@_venda.Total.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong></div>
+            <a class="store-primary" href="/">Voltar à loja</a>
+            <small>Esta confirmação não representa aprovação de pagamento.</small>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int VendaId { get; set; }
+    private VendaComercial? _venda;
+    private bool _carregando = true;
+    protected override async Task OnParametersSetAsync()
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        _venda = await db.VendaComercial.AsNoTracking().Include(v => v.ItensVenda)
+            .FirstOrDefaultAsync(v => v.Id == VendaId);
+        _carregando = false;
+    }
+}

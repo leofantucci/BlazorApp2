@@ -1,0 +1,206 @@
+@page "/financeiro/dashboard"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+@inject IJSRuntime JS
+
+<PageTitle>Financeiro - Visão Geral</PageTitle>
+
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Visão Geral do Negócio</p></div>
+
+    @if (carregando)
+    {
+        <p class="texto-padrao-1 mt-3">Processando dados financeiros...</p>
+    }
+    else
+    {
+        <div class="row g-3 mt-2" style="width:100%; max-width:1100px;">
+            <!-- Cards de Resumo -->
+            <div class="col-md-3">
+                <div class="card text-bg-primary p-3">
+                    <small>Receita Total</small>
+                    <h4 class="mb-0">R$ @Receita.ToString("N2")</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-warning p-3">
+                    <small>Custo de Produção</small>
+                    <h4 class="mb-0">R$ @CustoProd.ToString("N2")</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-info p-3">
+                    <small>Custo Embalagens</small>
+                    <h4 class="mb-0">R$ @CustoEmb.ToString("N2")</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-bg-success p-3">
+                    <small>Lucro Líquido</small>
+                    <h4 class="mb-0">R$ @Lucro.ToString("N2")</h4>
+                </div>
+            </div>
+
+            <!-- Segunda linha de cards -->
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small>Margem Média</small>
+                    <h4 class="mb-0">@MargemMedia.ToString("N1") %</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small>Qtd. de Vendas</small>
+                    <h4 class="mb-0">@QtdVendas</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small>Capital em Estoque (Produtos)</small>
+                    <h4 class="mb-0">R$ @EstoqueProdutos.ToString("N2")</h4>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card p-3">
+                    <small>Capital em Insumos (MP + Emb.)</small>
+                    <h4 class="mb-0">R$ @EstoqueInsumos.ToString("N2")</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-2" style="width:100%; max-width:1100px;">
+            <div class="col-md-3"><div class="card p-3"><small>Peças cadastradas</small><h4 class="mb-0">@QtdPecas</h4></div></div>
+            <div class="col-md-3"><div class="card p-3"><small>Impressoras cadastradas</small><h4 class="mb-0">@QtdImpressoras</h4></div></div>
+            <div class="col-md-3"><div class="card p-3"><small>Tempo estimado das peças em estoque</small><h4 class="mb-0">@HorasPecasEstoque.ToString("N1") h</h4></div></div>
+            <div class="col-md-3"><div class="card p-3"><small>Desperdício registrado</small><h4 class="mb-0">@DesperdicioLabel</h4></div></div>
+        </div>
+        <h5 class="texto-padrao-1 mt-4">Carga de impressão representada pelas peças em estoque</h5>
+        <div class="table-responsive" style="max-width:1100px;">
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark"><tr><th>Impressora</th><th>Horas estimadas nas peças em estoque</th></tr></thead>
+                <tbody>
+                    @if (MaquinasResumo.Count == 0)
+                    {
+                        <tr><td colspan="2">Não há peças vinculadas a impressoras.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var maquina in MaquinasResumo)
+                        {
+                            <tr><td>@maquina.Nome</td><td>@maquina.Horas.ToString("N2") h</td></tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="alert alert-info mt-3" style="max-width:1100px;">
+            Indicadores de produção estimados a partir das receitas, tempos cadastrados e estoques atuais. O sistema ainda não registra apontamentos de produção nem perdas; portanto, não é possível calcular utilização real das máquinas ou percentual de desperdício.
+            <a class="alert-link" href="/calculadora-producao">Abrir Calculadora de Produção</a>
+        </div>
+
+        <!-- Tabela Top 5 Produtos -->
+        <h5 class="texto-padrao-1 mt-4">Top 5 Produtos Mais Rentáveis (por unidade)</h5>
+        <table class="table table-striped table-bordered mt-2">
+            <thead class="table-dark">
+                <tr>
+                    <th>Produto</th>
+                    <th>Preço Venda</th>
+                    <th>Custo Total</th>
+                    <th>Lucro Unit.</th>
+                    <th>Margem %</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in TopProdutos)
+                {
+                    var custo = p.Calcular_Custo_Total();
+                    var lucro = p.Lucro_Liquido();
+                    var margem = p.Valor_Venda > 0 ? (lucro / p.Valor_Venda) * 100 : 0;
+                    <tr>
+                        <td>@p.Nome</td>
+                        <td>R$ @p.Valor_Venda.ToString("N2")</td>
+                        <td>R$ @custo.ToString("N2")</td>
+                        <td class="text-success">R$ @lucro.ToString("N2")</td>
+                        <td>@margem.ToString("N1") %</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <div class="area-botoes mt-3">
+        <button type="button" class="btn btn-secondary mt-3" @onclick="Voltar">Voltar</button>
+    </div>
+</div>
+
+@code {
+    private bool carregando = true;
+    private List<Venda> vendas = new();
+    private List<Produto> produtos = new();
+    private List<MateriaPrima> materias = new();
+    private List<Embalagem> embalagens = new();
+
+    private double Receita, CustoProd, CustoEmb, Lucro, MargemMedia;
+    private int QtdVendas;
+    private double EstoqueProdutos, EstoqueInsumos;
+    private int QtdPecas, QtdImpressoras;
+    private double HorasPecasEstoque;
+    private string DesperdicioLabel = "Sem dados";
+    private List<MaquinaResumo> MaquinasResumo = new();
+    private List<Produto> TopProdutos = new();
+    private sealed record MaquinaResumo(string Nome, double Horas);
+
+    protected override void OnInitialized() => Carregar();
+
+    private void Carregar()
+    {
+        try
+        {
+            carregando = true;
+            vendas = RepositorioTechToys.ListarTodos<Venda>() ?? new();
+            produtos = RepositorioTechToys.ListarTodos<Produto>() ?? new();
+            materias = RepositorioTechToys.ListarTodos<MateriaPrima>() ?? new();
+            embalagens = RepositorioTechToys.ListarTodos<Embalagem>() ?? new();
+            var pecas = RepositorioTechToys.ListarTodos<Peca>() ?? new();
+            var impressoras = RepositorioTechToys.ListarTodos<Impressora>() ?? new();
+            QtdPecas = pecas.Count;
+            QtdImpressoras = impressoras.Count;
+            HorasPecasEstoque = pecas.Sum(p => p.Tempo_Impressao * (double)RepositorioTechToys.ObterQuantidadeEstoque<Peca>(p.Id)) / 60d;
+            MaquinasResumo = pecas.Where(p => p.Impressora is not null)
+                .GroupBy(p => new { p.Impressora!.Id, p.Impressora!.Nome, p.Impressora!.Modelo })
+                .Select(g => new MaquinaResumo($"{g.Key.Nome} — {g.Key.Modelo}", g.Sum(p => p.Tempo_Impressao * (double)RepositorioTechToys.ObterQuantidadeEstoque<Peca>(p.Id)) / 60d))
+                .OrderByDescending(x => x.Horas).ToList();
+
+            Receita = vendas.Sum(v => v.Calcular_Lucro_Bruto());
+            CustoProd = vendas.Sum(v => v.Calcular_Custo_Producao());
+            CustoEmb = vendas.Sum(v => v.Calcular_Custo_Embalagens());
+            Lucro = Receita - CustoProd - CustoEmb;
+            QtdVendas = vendas.Count;
+            MargemMedia = Receita > 0 ? (Lucro / Receita) * 100 : 0;
+
+            EstoqueProdutos = produtos.Sum(p => p.Calcular_Custo_Total() * (double)RepositorioTechToys.ObterQuantidadeEstoque<Produto>(p.Id));
+            EstoqueInsumos = materias.Sum(m => m.Calcular_Preco_Grama() * (double)RepositorioTechToys.ObterQuantidadeEstoque<MateriaPrima>(m.Id)) +
+                             embalagens.Sum(e => e.Preco * (double)RepositorioTechToys.ObterQuantidadeEstoque<Embalagem>(e.Id));
+
+            TopProdutos = produtos
+                .Where(p => p.Valor_Venda > 0)
+                .OrderByDescending(p => p.Lucro_Liquido())
+                .Take(5)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro no Dashboard: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private async Task Voltar() => await JS.InvokeVoidAsync("appNavigation.backOrFallback", "/visao-geral");
+}

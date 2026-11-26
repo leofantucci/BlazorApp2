@@ -1,0 +1,153 @@
+@page "/placas/nfc/{CodigoPublico}/editar"
+@inject IDbContextFactory<MyDBContext> ContextFactory
+@using Microsoft.AspNetCore.Identity
+
+<PageTitle>Gerenciar placa NFC | Placas Infinity</PageTitle>
+<div class="store-shell activation-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a><a class="back-link" href="/">Loja</a></header>
+    @if (_carregando)
+    {
+        <p class="store-message">Carregando painel...</p>
+    }
+    else if (_placa is null || _placa.Status != StatusPlacaNFC.Ativo)
+    {
+        <div class="empty-catalog"><h2>Placa indisponível</h2><p>Não foi possível localizar uma placa ativa com este endereço.</p></div>
+    }
+    else if (!_autenticado)
+    {
+        <section class="activation-card"><span class="eyebrow">ÁREA DO CLIENTE</span><h1>Gerenciar minha placa</h1><p>Informe a senha criada durante a ativação.</p>
+            <label class="activation-password">Senha<input type="password" autocomplete="current-password" @bind="_senha" /></label>
+            @if (!string.IsNullOrWhiteSpace(_mensagem)) { <p class="activation-error">@_mensagem</p> }
+            <button class="store-primary" @onclick="AutenticarAsync" disabled="@_processando">Acessar painel</button>
+        </section>
+    }
+    else
+    {
+        <section class="editor-panel">
+            <span class="eyebrow">PERSONALIZAÇÃO</span><h1>@(string.IsNullOrWhiteSpace(_placa.Nome) ? "Minha placa" : _placa.Nome)</h1>
+            <p>Adicione os links que serão exibidos quando alguém aproximar o celular da sua placa.</p>
+            @foreach (var card in _cards)
+            {
+                <div class="editor-card" @key="card.Key">
+                    <label>Nome<input @bind="card.Nome" /></label>
+                    <label>Descrição<input @bind="card.Descricao" /></label>
+                    <label>Link<input type="url" @bind="card.Link" placeholder="https://..." /></label>
+                    <label>Ícone (URL ou caminho)<input @bind="card.Icone" placeholder="Media/site.webp" /></label>
+                    <button class="remove-card" @onclick="() => _cards.Remove(card)">Remover link</button>
+                </div>
+            }
+            <div class="editor-actions">
+                <button class="store-secondary" @onclick="AdicionarCard">+ Adicionar link</button>
+                <button class="store-primary" @onclick="SalvarAsync" disabled="@_processando">@(_processando ? "Salvando..." : "Salvar alterações")</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(_mensagem)) { <p class="activation-error">@_mensagem</p> }
+        </section>
+    }
+</div>
+
+@code {
+    private sealed class CardForm
+    {
+        public Guid Key { get; set; } = Guid.NewGuid();
+        public int Id { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string? Descricao { get; set; }
+        public string Link { get; set; } = string.Empty;
+        public string Icone { get; set; } = "Media/site.webp";
+        public int Ordem { get; set; }
+    }
+
+    [Parameter] public string CodigoPublico { get; set; } = string.Empty;
+    private PlacaNFC? _placa;
+    private List<CardForm> _cards = new();
+    private bool _carregando = true;
+    private bool _autenticado;
+    private bool _processando;
+    private string _senha = string.Empty;
+    private string? _mensagem;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        _placa = await db.PlacaNFC.AsNoTracking().Include(x => x.Cards)
+            .FirstOrDefaultAsync(x => x.CodigoPublico == CodigoPublico);
+        if (_placa is not null)
+            _cards = _placa.Cards.OrderBy(x => x.Ordem).Select(x => new CardForm { Id = x.Id, Nome = x.Nome, Descricao = x.Descricao, Link = x.Link, Icone = x.Icone, Ordem = x.Ordem }).ToList();
+        _carregando = false;
+    }
+
+    private async Task AutenticarAsync()
+    {
+        if (_placa is null || string.IsNullOrWhiteSpace(_placa.SenhaHash)) return;
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        var placa = await db.PlacaNFC.FirstOrDefaultAsync(x => x.Id == _placa.Id);
+        if (placa is null || placa.Status != StatusPlacaNFC.Ativo) return;
+        if (placa.BloqueadoAteUtc.HasValue && placa.BloqueadoAteUtc.Value > DateTime.UtcNow)
+        {
+            _mensagem = "Acesso temporariamente bloqueado após tentativas inválidas. Tente novamente mais tarde.";
+            return;
+        }
+        var hasher = new PasswordHasher<PlacaNFC>();
+        if (hasher.VerifyHashedPassword(placa, placa.SenhaHash ?? string.Empty, _senha) == PasswordVerificationResult.Failed)
+        {
+            placa.TentativasSenha++;
+            if (placa.TentativasSenha >= 5)
+            {
+                placa.TentativasSenha = 0;
+                placa.BloqueadoAteUtc = DateTime.UtcNow.AddMinutes(15);
+            }
+            await db.SaveChangesAsync();
+            _mensagem = "Senha incorreta. Após cinco tentativas, o acesso fica bloqueado por 15 minutos.";
+            return;
+        }
+        placa.TentativasSenha = 0;
+        placa.BloqueadoAteUtc = null;
+        await db.SaveChangesAsync();
+        _autenticado = true;
+        _senha = string.Empty;
+        _mensagem = null;
+    }
+
+    private void AdicionarCard() => _cards.Add(new CardForm { Ordem = _cards.Count });
+
+    private async Task SalvarAsync()
+    {
+        if (!_autenticado || _placa is null || _processando) return;
+        if (_cards.Any(c => string.IsNullOrWhiteSpace(c.Nome) || !Uri.TryCreate(c.Link, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)))
+        {
+            _mensagem = "Cada link precisa de um nome e uma URL válida iniciada por http:// ou https://.";
+            return;
+        }
+        _processando = true;
+        try
+        {
+            await using var db = await ContextFactory.CreateDbContextAsync();
+            var placa = await db.PlacaNFC.Include(x => x.Cards).FirstOrDefaultAsync(x => x.Id == _placa.Id && x.Status == StatusPlacaNFC.Ativo);
+            if (placa is null) { _mensagem = "A placa não está mais disponível."; return; }
+            var idsMantidos = _cards.Where(c => c.Id > 0).Select(c => c.Id).ToHashSet();
+            db.PlacaNFCCard.RemoveRange(placa.Cards.Where(c => !idsMantidos.Contains(c.Id)));
+            foreach (var form in _cards)
+            {
+                var card = form.Id > 0 ? placa.Cards.FirstOrDefault(c => c.Id == form.Id) : null;
+                if (card is null)
+                {
+                    card = new PlacaNFCCard { PlacaNFCId = placa.Id };
+                    db.PlacaNFCCard.Add(card);
+                }
+                card.Nome = form.Nome.Trim();
+                card.Descricao = string.IsNullOrWhiteSpace(form.Descricao) ? null : form.Descricao.Trim();
+                card.Link = form.Link.Trim();
+                card.Icone = string.IsNullOrWhiteSpace(form.Icone) ? "Media/site.webp" : form.Icone.Trim();
+                card.Ordem = _cards.IndexOf(form);
+            }
+            placa.DataAtualizacaoUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            _mensagem = "Seus links foram salvos com sucesso.";
+            _placa = placa;
+            await OnParametersSetAsync();
+            _autenticado = true;
+        }
+        catch { _mensagem = "Não foi possível salvar as alterações. Tente novamente."; }
+        finally { _processando = false; }
+    }
+}

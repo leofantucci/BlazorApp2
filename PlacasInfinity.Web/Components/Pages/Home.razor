@@ -1,0 +1,171 @@
+@page "/"
+@implements IDisposable
+@inject LojaService Loja
+@inject CarrinhoState Carrinho
+@inject NavigationManager Navigation
+@inject ILogger<Home> Logger
+
+<PageTitle>Placas Infinity | Loja</PageTitle>
+
+<div class="store-shell">
+    <header class="store-header">
+        <a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a>
+        <nav class="store-main-nav" aria-label="Navegação principal">
+            <a href="#produtos">Produtos</a>
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/meus-pedidos">Meus Pedidos</a>
+                    <details class="user-menu">
+                        <summary><img class="header-user-icon" src="/Media/userIcon.webp" alt="" /><span>Olá, @context.User.Identity?.Name!</span><span class="menu-chevron">⌄</span></summary>
+                        <div class="user-menu-panel">
+                            <a href="/minha-conta">Minha área</a>
+                            <a href="/meus-pedidos">Meus pedidos</a>
+                            <form method="post" action="/conta/sair"><AntiforgeryToken /><button type="submit">Sair da conta</button></form>
+                        </div>
+                    </details>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="header-account-link" href="/conta"><img class="header-user-icon" src="/Media/userIcon.webp" alt="" /><span>Entrar / Cadastro</span></a>
+                </NotAuthorized>
+            </AuthorizeView>
+        </nav>
+    </header>
+
+    <section class="store-hero">
+        <div class="store-hero-content">
+            <span class="eyebrow">SUA CONEXÃO, SEM LIMITES</span>
+            <h1>Uma placa. <span>infinitas possibilidades.</span></h1>
+            <p>Conecte seu negócio ao mundo físico e digital. Com as placas NFC Infinity, seus clientes acessam seus links, contatos e informações com apenas uma aproximação.</p>
+            <div class="store-hero-actions">
+                <a class="store-primary" href="#produtos">Explorar produtos <span aria-hidden="true">→</span></a>
+                <span class="store-hero-caption"><span class="store-live-dot"></span> Tecnologia NFC • Simples e prática</span>
+            </div>
+        </div>
+        <div class="store-hero-products" aria-label="Modelos de placas NFC Infinity">
+            <div class="hero-product hero-product-minimal">
+                <img src="/Media/placaMinimalista.webp" alt="Placa Infinity minimalista" />
+                <span class="hero-product-label">Design minimalista</span>
+            </div>
+            <div class="hero-product hero-product-approx">
+                <img src="/Media/placaAproxime.webp" alt="Placa Infinity Aproxim e Celular" />
+                <span class="hero-product-label">Aproxime e conecte</span>
+            </div>
+            <div class="hero-glow" aria-hidden="true"></div>
+        </div>
+    </section>
+
+    <section id="produtos" class="store-products">
+        <div class="section-heading">
+            <div><span class="eyebrow">CATÁLOGO</span><h2>Escolha sua placa</h2></div>
+            <span class="product-count">@(_produtos.Count) produto(s)</span>
+        </div>
+        @if (_carregando)
+        {
+            <p class="store-message">Carregando produtos...</p>
+        }
+        else if (!string.IsNullOrWhiteSpace(_erro))
+        {
+            <p class="store-message store-error">@_erro</p>
+        }
+        else if (_produtos.Count == 0)
+        {
+            <div class="empty-catalog"><h3>Estamos preparando novidades.</h3><p>Nenhum produto está disponível no momento. Volte em breve.</p></div>
+        }
+        else
+        {
+            <div class="product-grid">
+                @foreach (var produto in _produtos)
+                {
+                    <article class="product-card" @key="produto.Id">
+                        @if (!string.IsNullOrWhiteSpace(produto.Foto))
+                        {
+                            <img src="@produto.Foto" alt="@produto.Nome" loading="lazy" />
+                        }
+                        else
+                        {
+                            <div class="product-placeholder">∞</div>
+                        }
+                        <div class="product-card-content">
+                            <h3>@produto.Nome</h3>
+                            <p>@produto.Descricao</p>
+                            <div class="product-card-footer">
+                                <strong>@produto.Preco.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong>
+                                <button class="store-primary small" type="button" @onclick="() => Adicionar(produto.Id)">
+                                    @(Carrinho.Quantidade(produto.Id) > 0 ? "Adicionar mais +" : "Adicionar ao carrinho")
+                                </button>
+                            </div>
+                            @if (Carrinho.Quantidade(produto.Id) > 0)
+                            {
+                                <div class="product-cart-feedback">@Carrinho.Quantidade(produto.Id) no carrinho</div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+    <footer class="store-footer">
+        <div class="store-footer-inner">
+            <span>© @DateTime.Now.Year Placas Infinity · Uma solução Infinity</span>
+            <div class="store-contact"><strong>Fale com a gente</strong><a href="mailto:infinitysolucoes77@gmail.com">infinitysolucoes77@gmail.com</a><a href="tel:+5511924762202">(11) 92476-2202</a></div>
+        </div>
+    </footer>
+</div>
+
+<button class="floating-cart-button" type="button" aria-label="Abrir carrinho com @Carrinho.TotalItens itens" @onclick="() => _carrinhoAberto = !_carrinhoAberto">
+    <span class="cart-icon">🛒</span><span class="cart-button-label">Carrinho</span>
+    <sup class="cart-count">@Carrinho.TotalItens</sup>
+</button>
+
+@if (_carrinhoAberto)
+{
+    <div class="cart-backdrop" @onclick="FecharCarrinho"></div>
+    <aside class="cart-drawer" aria-label="Carrinho de compras">
+        <div class="cart-drawer-heading"><div><span class="eyebrow">SUA SELEÇÃO</span><h2>Meu carrinho</h2></div><button type="button" class="cart-close" aria-label="Fechar carrinho" @onclick="FecharCarrinho">×</button></div>
+        @if (ItensCarrinho.Count == 0)
+        {
+            <p class="store-message">Seu carrinho está vazio.</p>
+        }
+        else
+        {
+            <div class="cart-table-wrap"><table class="cart-table"><thead><tr><th>Qtd. x</th><th>Produto</th><th>Preço</th></tr></thead><tbody>
+                @foreach (var item in ItensCarrinho)
+                {
+                    <tr @key="item.Produto.Id"><td><div class="cart-quantity"><button type="button" aria-label="Diminuir quantidade" @onclick="() => Carrinho.Remover(item.Produto.Id)">−</button><strong>@item.Quantidade</strong><button type="button" aria-label="Aumentar quantidade" @onclick="() => Carrinho.Adicionar(item.Produto.Id)">+</button></div></td><td>@item.Produto.Nome<button class="cart-remove" type="button" @onclick="() => Carrinho.Excluir(item.Produto.Id)">Remover</button></td><td>@((item.Produto.Preco * item.Quantidade).ToString("C2", new System.Globalization.CultureInfo("pt-BR")))</td></tr>
+                }
+            </tbody></table></div>
+            <div class="cart-total"><span>Total</span><strong>@TotalCarrinho.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong></div>
+            <button class="store-primary cart-checkout" type="button" @onclick="FinalizarCompra">Finalizar compra <span aria-hidden="true">→</span></button>
+            <button class="cart-continue" type="button" @onclick="FecharCarrinho">Continuar comprando</button>
+        }
+    </aside>
+}
+
+@code {
+    private List<ProdutoComercial> _produtos = new();
+    private bool _carregando = true;
+    private string? _erro;
+    private bool _carrinhoAberto;
+    private List<(ProdutoComercial Produto, int Quantidade)> ItensCarrinho => _produtos
+        .Where(p => Carrinho.Quantidade(p.Id) > 0)
+        .Select(p => (p, Carrinho.Quantidade(p.Id))).ToList();
+    private decimal TotalCarrinho => ItensCarrinho.Sum(i => i.Produto.Preco * i.Quantidade);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Carrinho.Alterado += AtualizarCarrinho;
+        try { _produtos = await Loja.ListarProdutosAsync(); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao carregar catálogo da loja.");
+            _erro = "Não foi possível carregar os produtos agora. Tente novamente em instantes.";
+        }
+        finally { _carregando = false; }
+    }
+
+    private void Adicionar(int produtoId) { Carrinho.Adicionar(produtoId); _carrinhoAberto = true; }
+    private void FecharCarrinho() => _carrinhoAberto = false;
+    private void FinalizarCompra() => Navigation.NavigateTo("/comprar");
+    private void AtualizarCarrinho() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Carrinho.Alterado -= AtualizarCarrinho;
+}
