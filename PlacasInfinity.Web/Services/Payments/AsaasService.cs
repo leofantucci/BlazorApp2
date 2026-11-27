@@ -137,5 +137,23 @@ public sealed class AsaasPixQrCodeResponse
 {
     public string? EncodedImage { get; set; }
     public string? Payload { get; set; }
-    public DateTimeOffset? ExpirationDate { get; set; }
+    public string? ExpirationDate { get; set; }
+
+    public DateTime? ExpirationDateUtc
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ExpirationDate))
+                return null;
+
+            if (DateTimeOffset.TryParse(
+                    ExpirationDate,
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.AssumeUniversal,
+                    out var data))
+                return data.UtcDateTime;
+
+            return null;
+        }
+    }
 }

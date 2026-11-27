@@ -268,7 +268,7 @@ public sealed class LojaService(
             var qr = await asaasService.ObterQrCodePixAsync(pagamento.TransacaoExternaId!, cancellationToken);
             pagamento.PixQrCodeBase64 = qr.EncodedImage;
             pagamento.PixCopiaECola = qr.Payload;
-            pagamento.PixExpiracaoUtc = qr.ExpirationDate?.UtcDateTime;
+            pagamento.PixExpiracaoUtc = qr.ExpirationDateUtc;
             await db.SaveChangesAsync(cancellationToken);
         }
     }
