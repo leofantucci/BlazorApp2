@@ -1,6 +1,6 @@
 # Vista para o mar contando dinheiro na rede
 ## Gestão Infinity + Placas Infinity
-
+a
 A solução mantém o Gestão Infinity e adiciona a loja pública `PlacasInfinity.Web`, compartilhando `TechToysDominio`, `Repositorio`, `MyDBContext` e a tabela `Cliente`.
 
 ## Projetos
