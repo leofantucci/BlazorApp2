@@ -15,21 +15,29 @@ public sealed class AsaasService
     public AsaasService(HttpClient http, IOptions<AsaasOptions> options)
     {
         var config = options.Value;
-        if (string.IsNullOrWhiteSpace(config.ApiKey))
-            throw new InvalidOperationException("API Key do Asaas não configurada.");
         if (!Uri.TryCreate(config.BaseUrl, UriKind.Absolute, out var baseUri) ||
-            (baseUri.Scheme != Uri.UriSchemeHttps && !baseUri.IsLoopback))
-            throw new InvalidOperationException("URL do Asaas inválida. Utilize HTTPS.");
+            baseUri.Scheme != Uri.UriSchemeHttps ||
+            !string.Equals(baseUri.Host, "api-sandbox.asaas.com", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Este build de testes aceita somente https://api-sandbox.asaas.com/v3/.");
 
         _http = http;
+        _http.Timeout = TimeSpan.FromSeconds(30);
         _http.BaseAddress = new Uri(baseUri.ToString().TrimEnd('/') + "/");
-        _http.DefaultRequestHeaders.TryAddWithoutValidation("access_token", config.ApiKey);
+        if (!string.IsNullOrWhiteSpace(config.ApiKey))
+            _http.DefaultRequestHeaders.TryAddWithoutValidation("access_token", config.ApiKey);
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("PlacasInfinity/1.0");
     }
 
+    private void GarantirConfiguracao()
+    {
+        if (!_http.DefaultRequestHeaders.Contains("access_token"))
+            throw new InvalidOperationException("Configure Asaas:ApiKey com a chave da conta Sandbox.");
+    }
+
     public async Task<(bool Sucesso, int StatusCode, string Resposta)> TestarConexaoAsync(CancellationToken ct = default)
     {
+        GarantirConfiguracao();
         using var response = await _http.GetAsync("myAccount/status/", ct);
         var body = await response.Content.ReadAsStringAsync(ct);
         return (response.IsSuccessStatusCode, (int)response.StatusCode, body);
@@ -37,13 +45,14 @@ public sealed class AsaasService
 
     public async Task<string> CriarClienteAsync(Cliente cliente, CancellationToken ct = default)
     {
+        GarantirConfiguracao();
         var documento = SomenteDigitos(cliente.Documento);
         if (documento.Length is not (11 or 14))
             throw new InvalidOperationException("Informe um CPF ou CNPJ válido para gerar o PIX.");
 
         var body = new Dictionary<string, object?>
         {
-            ["name"] = cliente.Nome,
+            ["name"] = string.IsNullOrWhiteSpace(cliente.Nome) ? throw new InvalidOperationException("Nome do cliente obrigatório.") : cliente.Nome.Trim(),
             ["cpfCnpj"] = documento,
             ["email"] = cliente.Email,
             ["mobilePhone"] = string.IsNullOrWhiteSpace(cliente.Telefone) ? null : SomenteDigitos(cliente.Telefone),
@@ -62,6 +71,11 @@ public sealed class AsaasService
 
     public async Task<AsaasPaymentResponse> CriarCobrancaPixAsync(string customerId, int vendaId, decimal valor, DateOnly vencimento, CancellationToken ct = default)
     {
+        GarantirConfiguracao();
+        if (string.IsNullOrWhiteSpace(customerId) || customerId.Length > 80)
+            throw new InvalidOperationException("Identificador de cliente Asaas inválido.");
+        if (vendaId <= 0 || valor <= 0 || valor > 1_000_000m)
+            throw new InvalidOperationException("Pedido ou valor da cobrança inválido.");
         var body = new
         {
             customer = customerId,
@@ -81,6 +95,7 @@ public sealed class AsaasService
 
     public async Task<AsaasPixQrCodeResponse> ObterQrCodePixAsync(string paymentId, CancellationToken ct = default)
     {
+        GarantirConfiguracao();
         using var response = await _http.GetAsync($"payments/{Uri.EscapeDataString(paymentId)}/pixQrCode", ct);
         var json = await response.Content.ReadAsStringAsync(ct);
         if (!response.IsSuccessStatusCode)

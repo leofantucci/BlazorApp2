@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using System.Security.Cryptography;
+using System.Text;
 using System.ComponentModel.DataAnnotations;
 using Repositorio;
 using TechToysDominio;
@@ -25,8 +28,33 @@ public sealed class CheckoutInput
     public string? Observacoes { get; set; }
 }
 
-public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, AsaasService asaasService)
+public sealed class LojaService(
+    IDbContextFactory<MyDBContext> contextFactory,
+    AsaasService asaasService,
+    IOptions<AsaasOptions> asaasOptions)
 {
+    // Chave opaca assinada: o ID sequencial do pedido, sozinho, nunca autoriza acesso.
+    public string GerarChaveAcessoPedido(int vendaId)
+    {
+        var segredo = asaasOptions.Value.WebhookToken;
+        if (string.IsNullOrWhiteSpace(segredo))
+            throw new InvalidOperationException("Configure Asaas:WebhookToken para proteger o acesso aos pedidos.");
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(segredo));
+        return Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes($"pedido:{vendaId}")));
+    }
+
+    public bool ValidarChaveAcessoPedido(int vendaId, string? chave)
+    {
+        if (string.IsNullOrWhiteSpace(chave) || chave.Length != 64) return false;
+        try
+        {
+            var esperada = Convert.FromHexString(GerarChaveAcessoPedido(vendaId));
+            var recebida = Convert.FromHexString(chave);
+            return CryptographicOperations.FixedTimeEquals(esperada, recebida);
+        }
+        catch (FormatException) { return false; }
+    }
+
     public async Task<List<ProdutoComercial>> ListarProdutosAsync(CancellationToken cancellationToken = default)
     {
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
@@ -61,8 +89,16 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         int? usuarioComercialId = null, CancellationToken cancellationToken = default)
     {
         if (itens.Count == 0) throw new InvalidOperationException("Adicione ao menos um produto.");
-        if (string.IsNullOrWhiteSpace(dados.Nome) || string.IsNullOrWhiteSpace(dados.Email))
-            throw new InvalidOperationException("Nome e e-mail são obrigatórios.");
+        if (string.IsNullOrWhiteSpace(dados.Nome) || dados.Nome.Trim().Length > 100 ||
+            string.IsNullOrWhiteSpace(dados.Email) || dados.Email.Trim().Length > 150 ||
+            !new EmailAddressAttribute().IsValid(dados.Email.Trim()))
+            throw new InvalidOperationException("Informe nome e e-mail válidos.");
+        if (string.IsNullOrWhiteSpace(dados.Endereco) || dados.Endereco.Trim().Length > 200 ||
+            string.IsNullOrWhiteSpace(dados.Cidade) || dados.Cidade.Trim().Length > 100 ||
+            string.IsNullOrWhiteSpace(dados.Estado) || dados.Estado.Trim().Length != 2 ||
+            string.IsNullOrWhiteSpace(dados.CEP) || dados.CEP.Trim().Length > 20 ||
+            (dados.Telefone?.Length ?? 0) > 20 || (dados.Observacoes?.Length ?? 0) > 1000)
+            throw new InvalidOperationException("Confira os dados de endereço, telefone e observações.");
 
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
@@ -118,13 +154,13 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         }
 
         var documento = new string((dados.Documento ?? string.Empty).Where(char.IsDigit).ToArray());
-        if (documento.Length == 11)
+        if (documento.Length == 11 && ValidarCpf(documento))
         {
             cliente.CPF = documento;
             cliente.CNPJ = null;
             cliente.TipoCliente = TipoCliente.PF;
         }
-        else if (documento.Length == 14)
+        else if (documento.Length == 14 && ValidarCnpj(documento))
         {
             cliente.CNPJ = documento;
             cliente.CPF = null;
@@ -132,7 +168,7 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         }
         else
         {
-            throw new InvalidOperationException("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) para gerar o PIX.");
+            throw new InvalidOperationException("Informe um CPF ou CNPJ válido para gerar o PIX.");
         }
 
         var venda = new VendaComercial
@@ -163,6 +199,8 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         }
 
         venda.Total = venda.Subtotal + venda.Frete - venda.Desconto;
+        if (venda.Total <= 0 || venda.Total > 1_000_000m)
+            throw new InvalidOperationException("O total do pedido está fora do limite permitido.");
         venda.Historico.Add(new ControleComercial
         {
             Status = StatusVendaComercial.AguardandoPagamento,
@@ -185,8 +223,10 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         return venda.Id;
     }
 
-    public async Task GerarCobrancaPixAsync(int vendaId, CancellationToken cancellationToken = default)
+    public async Task GerarCobrancaPixAsync(int vendaId, string? chaveAcesso, CancellationToken cancellationToken = default)
     {
+        if (!ValidarChaveAcessoPedido(vendaId, chaveAcesso))
+            throw new UnauthorizedAccessException("Acesso ao pedido não autorizado.");
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var venda = await db.VendaComercial
             .Include(v => v.Cliente)
@@ -197,6 +237,9 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
             ?? throw new InvalidOperationException("Pagamento do pedido não encontrado.");
         if (pagamento.Status == StatusPagamento.Aprovado)
             return;
+        if (venda.Status == StatusVendaComercial.Cancelado ||
+            pagamento.Status is StatusPagamento.Cancelado or StatusPagamento.Estornado or StatusPagamento.Recusado)
+            throw new InvalidOperationException("Este pedido não aceita uma nova cobrança.");
 
         if (string.IsNullOrWhiteSpace(venda.Cliente.AsaasCustomerId))
         {
@@ -230,8 +273,11 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         }
     }
 
-    public async Task<(VendaComercial? Venda, Pagamento? Pagamento)> ObterPedidoPagamentoAsync(int vendaId, CancellationToken cancellationToken = default)
+    public async Task<(VendaComercial? Venda, Pagamento? Pagamento)> ObterPedidoPagamentoAsync(
+        int vendaId, string? chaveAcesso, CancellationToken cancellationToken = default)
     {
+        if (!ValidarChaveAcessoPedido(vendaId, chaveAcesso))
+            return (null, null);
         await using var db = await contextFactory.CreateDbContextAsync(cancellationToken);
         var venda = await db.VendaComercial.AsNoTracking()
             .Include(v => v.ItensVenda)
@@ -240,4 +286,33 @@ public sealed class LojaService(IDbContextFactory<MyDBContext> contextFactory, A
         return (venda, venda?.Pagamentos.OrderByDescending(p => p.Id).FirstOrDefault());
     }
 
+
+    private static bool ValidarCpf(string cpf)
+    {
+        if (cpf.Length != 11 || cpf.Distinct().Count() == 1) return false;
+        static int Digito(string s, int pesoInicial)
+        {
+            var soma = 0;
+            for (var i = 0; i < s.Length; i++) soma += (s[i] - '0') * (pesoInicial - i);
+            var resto = soma % 11;
+            return resto < 2 ? 0 : 11 - resto;
+        }
+        return Digito(cpf[..9], 10) == cpf[9] - '0' &&
+               Digito(cpf[..10], 11) == cpf[10] - '0';
+    }
+
+    private static bool ValidarCnpj(string cnpj)
+    {
+        if (cnpj.Length != 14 || cnpj.Distinct().Count() == 1) return false;
+        static int Calcular(string valor, int[] pesos)
+        {
+            var soma = 0;
+            for (var i = 0; i < pesos.Length; i++) soma += (valor[i] - '0') * pesos[i];
+            var resto = soma % 11;
+            return resto < 2 ? 0 : 11 - resto;
+        }
+        var primeiro = Calcular(cnpj[..12], new[] { 5,4,3,2,9,8,7,6,5,4,3,2 });
+        var segundo = Calcular(cnpj[..12] + primeiro, new[] { 6,5,4,3,2,9,8,7,6,5,4,3,2 });
+        return primeiro == cnpj[12] - '0' && segundo == cnpj[13] - '0';
+    }
 }

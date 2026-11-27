@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Microsoft.Extensions.Options;
 using Repositorio;
 using TechToysDominio;
@@ -39,6 +40,25 @@ public sealed class AsaasWebhookService(
         var value = payment.TryGetProperty("value", out var valueElement) && valueElement.TryGetDecimal(out var parsedValue)
             ? parsedValue : (decimal?)null;
         if (string.IsNullOrWhiteSpace(paymentId)) throw new InvalidOperationException("Webhook sem ID de cobrança.");
+        if (string.IsNullOrWhiteSpace(externalReference) ||
+            !externalReference.StartsWith("venda-", StringComparison.Ordinal))
+            throw new InvalidOperationException("Webhook sem referência externa válida.");
+        if (!value.HasValue || value.Value <= 0)
+            throw new InvalidOperationException("Webhook sem valor de cobrança válido.");
+        if (eventName is not ("PAYMENT_CONFIRMED" or "PAYMENT_RECEIVED" or "PAYMENT_DELETED" or
+            "PAYMENT_REFUNDED" or "PAYMENT_PARTIALLY_REFUNDED"))
+            throw new InvalidOperationException("Tipo de evento Asaas não permitido.");
+        var statusEsperado = eventName switch
+        {
+            "PAYMENT_CONFIRMED" => "CONFIRMED",
+            "PAYMENT_RECEIVED" => "RECEIVED",
+            "PAYMENT_DELETED" => "DELETED",
+            "PAYMENT_REFUNDED" => "REFUNDED",
+            "PAYMENT_PARTIALLY_REFUNDED" => "PARTIALLY_REFUNDED",
+            _ => string.Empty
+        };
+        if (!string.Equals(status, statusEsperado, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Status da cobrança incompatível com o evento recebido.");
 
         await using var db = await contextFactory.CreateDbContextAsync(ct);
         if (await db.AsaasWebhookEventos.AnyAsync(e => e.EventoExternoId == eventId, ct)) return;
@@ -59,14 +79,14 @@ public sealed class AsaasWebhookService(
 
         if (registro is not null)
         {
-            if (!string.IsNullOrWhiteSpace(externalReference) &&
-                !string.Equals(externalReference, $"venda-{registro.VendaComercialId}", StringComparison.Ordinal))
+            if (!string.Equals(externalReference, $"venda-{registro.VendaComercialId}", StringComparison.Ordinal))
                 throw new InvalidOperationException("A referência externa do webhook não corresponde à venda.");
             if (value.HasValue && value.Value != registro.Valor)
                 throw new InvalidOperationException("O valor informado pelo webhook não corresponde ao pagamento registrado.");
 
             registro.StatusProvedor = status;
-            registro.PayloadRetorno = json.Length > 2000 ? json[..2000] : json;
+            // Persistir somente metadados necessários; o payload bruto pode conter dados pessoais.
+            registro.PayloadRetorno = JsonSerializer.Serialize(new { id = paymentId, status, evento = eventName });
             switch (eventName)
             {
                 case "PAYMENT_CONFIRMED":
@@ -115,8 +135,17 @@ public sealed class AsaasWebhookService(
 
         var evento = db.AsaasWebhookEventos.Local.First(e => e.EventoExternoId == eventId);
         evento.Processado = true;
-        await db.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+            await transaction.CommitAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            await transaction.RollbackAsync(ct);
+            // O Asaas pode reenviar o mesmo evento simultaneamente; índice único garante idempotência.
+            logger.LogInformation("Evento Asaas duplicado ignorado: {EventId}.", eventId);
+        }
     }
 
     private static string? GetString(JsonElement element, string name) =>

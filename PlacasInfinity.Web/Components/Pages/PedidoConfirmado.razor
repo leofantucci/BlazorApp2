@@ -2,6 +2,8 @@
 @implements IDisposable
 @inject LojaService Loja
 @inject IJSRuntime JS
+@inject NavigationManager Navigation
+@inject ILogger<PedidoConfirmado> Logger
 
 <PageTitle>Pagamento PIX | Placas Infinity</PageTitle>
 <div class="store-shell confirmation-shell">
@@ -58,6 +60,8 @@
 
 @code {
     [Parameter] public int VendaId { get; set; }
+    [SupplyParameterFromQuery(Name = "chave")]
+    public string? ChaveAcesso { get; set; }
     private VendaComercial? _venda;
     private Pagamento? _pagamento;
     private bool _carregando = true;
@@ -89,7 +93,7 @@
 
     private async Task AtualizarAsync()
     {
-        var dados = await Loja.ObterPedidoPagamentoAsync(VendaId);
+        var dados = await Loja.ObterPedidoPagamentoAsync(VendaId, ChaveAcesso);
         _venda = dados.Venda;
         _pagamento = dados.Pagamento;
         _carregando = false;
@@ -100,8 +104,12 @@
     {
         if (_gerando) return;
         _gerando = true; _erro = null;
-        try { await Loja.GerarCobrancaPixAsync(VendaId); await AtualizarAsync(); }
-        catch (Exception ex) { _erro = ex.Message; }
+        try { await Loja.GerarCobrancaPixAsync(VendaId, ChaveAcesso); await AtualizarAsync(); }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Falha ao gerar PIX para o pedido {VendaId}.", VendaId);
+            _erro = "Não foi possível gerar o PIX. Tente novamente em instantes.";
+        }
         finally { _gerando = false; }
     }
 

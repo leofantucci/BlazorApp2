@@ -1,6 +1,7 @@
 @page "/comprar"
 @page "/comprar/{ProdutoId:int}"
 @inject LojaService Loja
+@inject ILogger<Comprar> Logger
 @inject CarrinhoState Carrinho
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -128,19 +129,22 @@
             }).ToList();
             var vendaId = await Loja.CriarVendaAsync(_dados, itens, _usuarioComercialId);
             Carrinho.Limpar();
+            var chave = Loja.GerarChaveAcessoPedido(vendaId);
             try
             {
-                await Loja.GerarCobrancaPixAsync(vendaId);
+                await Loja.GerarCobrancaPixAsync(vendaId, chave);
             }
-            catch
+            catch (Exception ex)
             {
-                // O pedido fica preservado para que a cobrança possa ser tentada novamente na página do pedido.
+                // O pedido permanece acessível pela chave secreta para nova tentativa.
+                Logger.LogError(ex, "Falha ao gerar PIX para o pedido {VendaId}.", vendaId);
             }
-            Navigation.NavigateTo($"/pedido/{vendaId}");
+            Navigation.NavigateTo($"/pedido/{vendaId}?chave={Uri.EscapeDataString(chave)}");
         }
         catch (Exception ex)
         {
-            _erro = ex.Message;
+            Logger.LogError(ex, "Falha ao registrar pedido na loja.");
+            _erro = "Não foi possível registrar o pedido. Confira os dados e tente novamente.";
         }
         finally { _enviando = false; }
     }

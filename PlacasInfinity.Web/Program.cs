@@ -7,11 +7,20 @@ using PlacasInfinity.Web.Components;
 using Repositorio;
 using PlacasInfinity.Web.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.HttpOverrides;
 using PlacasInfinity.Web.Services.Payments;
 
 DatabaseEnvironment.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // A aplicação é publicada atrás do proxy gerenciado do Render.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -24,7 +33,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "PlacasInfinity.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
         options.SlidingExpiration = true;
     });
@@ -66,7 +77,18 @@ app.UseStatusCodePagesWithReExecute(
     "/not-found",
     createScopeForStatusCodePages: true);
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "no-referrer";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    if (context.Request.Path.StartsWithSegments("/pedido"))
+        context.Response.Headers["Cache-Control"] = "no-store";
+    await next();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
@@ -164,10 +186,25 @@ app.MapPost("/webhooks/asaas", async Task<IResult> (HttpRequest request, AsaasWe
     if (!webhook.ValidarToken(token))
         return Results.Unauthorized();
 
+    if (request.ContentLength is > 65536)
+        return Results.BadRequest(new { erro = "Payload maior que 64 KB." });
+    if (request.ContentType is null ||
+        !request.ContentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
+        return Results.BadRequest(new { erro = "Content-Type deve ser application/json." });
+
     using var reader = new StreamReader(request.Body);
-    var body = await reader.ReadToEndAsync(ct);
-    if (string.IsNullOrWhiteSpace(body) || body.Length > 65536)
-        return Results.BadRequest(new { erro = "Payload vazio ou maior que 64 KB." });
+    var buffer = new char[8192];
+    var bodyBuilder = new System.Text.StringBuilder();
+    int lidos;
+    while ((lidos = await reader.ReadAsync(buffer.AsMemory(), ct)) > 0)
+    {
+        if (bodyBuilder.Length + lidos > 65536)
+            return Results.BadRequest(new { erro = "Payload maior que 64 KB." });
+        bodyBuilder.Append(buffer, 0, lidos);
+    }
+    var body = bodyBuilder.ToString();
+    if (string.IsNullOrWhiteSpace(body))
+        return Results.BadRequest(new { erro = "Payload vazio." });
 
     try
     {

@@ -12,7 +12,19 @@ dotnet user-secrets set 'Asaas:WebhookToken' 'SEU_TOKEN_ALEATORIO_FORTE' --proje
 
 O token do webhook deve ser diferente da API Key. Gere, por exemplo, com `openssl rand -hex 32`.
 
-## 2. Banco de dados
+## 2. Configuração no Render
+
+Cadastre estas variáveis no serviço Web do Render (Environment):
+
+- `ASPNETCORE_ENVIRONMENT=Production`
+- `DATABASE_URL` com a URL PostgreSQL do banco compartilhado
+- `Asaas__ApiKey` com a chave da conta **Sandbox**
+- `Asaas__BaseUrl=https://api-sandbox.asaas.com/v3/`
+- `Asaas__WebhookToken` com o segredo aleatório forte usado no webhook
+
+O serviço foi deliberadamente travado no host Sandbox; ele recusa a URL de produção para evitar cobranças reais durante os testes. Não coloque a chave no Git, em `appsettings.json`, nem em variáveis expostas ao navegador.
+
+## 3. Banco de dados
 
 Aplique a migration incluída no projeto antes de testar. Na pasta `BlazorApp2` (raiz da solução), execute:
 
@@ -28,22 +40,24 @@ dotnet tool install --global dotnet-ef --version 10.0.12
 
 A migration adiciona o ID do cliente Asaas, os dados do PIX e a tabela de idempotência dos eventos. Faça backup antes de atualizar um banco com dados importantes.
 
-## 3. URL pública do webhook
+Depois de aplicar a migration, reinicie o serviço no Render. Se a migration não for aplicada, as consultas às tabelas/colunas do PIX falharão e a aplicação poderá exibir a página genérica de erro.
+
+## 4. URL pública do webhook
 
 O Asaas não consegue acessar `localhost`. Exponha temporariamente a aplicação local por HTTPS (por exemplo, usando um túnel HTTPS) e cadastre no painel Sandbox do Asaas a URL pública terminada em `/webhooks/asaas`. Configure o token exatamente igual ao `Asaas:WebhookToken`. Habilite os eventos de cobrança, especialmente `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_DELETED` e `PAYMENT_REFUNDED`.
 
-## 4. Teste
+## 5. Teste
 
 1. Execute a aplicação e acesse a loja.
 2. Faça um pedido com nome, e-mail, CPF/CNPJ, telefone e endereço.
-3. A página `/pedido/{id}` deverá mostrar o QR Code e o PIX Copia e Cola.
+3. Após criar o pedido, a aplicação redireciona para `/pedido/{id}?chave=...`; o link completo contém uma chave assinada obrigatória para consultar o QR Code e o PIX Copia e Cola.
 4. Para um teste básico de webhook, abra a cobrança no painel Sandbox e utilize a ação de confirmação manual, quando disponível.
 5. Para testar o pagamento do QR Code de ponta a ponta, a documentação do Asaas exige duas contas Sandbox: a conta que gera o QR Code e outra conta pagadora com saldo disponível. A conta de destino deve ter uma chave Pix cadastrada. O saldo da conta pagadora pode ser gerado confirmando manualmente uma cobrança de teste.
 6. Configure o webhook na conta que gerou a cobrança. O evento esperado para PIX recebido é `PAYMENT_RECEIVED`.
 7. O webhook atualiza `Pagamento.Status`, `Pagamento.StatusProvedor`, `Pagamento.DataConfirmacaoUtc` e `VendaComercial.Status`.
 8. A página atualiza o status automaticamente a cada 8 segundos.
 
-## 5. Campos gravados
+## 6. Campos gravados
 
 - `Cliente.AsaasCustomerId`: identifica o pagador na conta Asaas.
 - `Pagamento.TransacaoExternaId`: ID da cobrança Asaas (`pay_...`).
@@ -57,5 +71,6 @@ O Asaas não consegue acessar `localhost`. Exponha temporariamente a aplicação
 
 - A resposta de criação da cobrança não significa que o PIX foi pago. Para PIX, o fluxo documentado é `PAYMENT_RECEIVED`; somente esse evento muda a venda para `Pago`. `PAYMENT_CONFIRMED` significa que o pagamento foi efetuado, mas o saldo ainda não está disponível.
 - CPF/CNPJ é exigido pelo cadastro de clientes Asaas. O checkout agora solicita esse dado.
-- O script SQL é fornecido separadamente porque este ambiente de edição não possui o SDK `dotnet` para gerar e validar uma migration EF Core.
-- A rota `/dev/asaas-status` continua disponível somente em Development. Remova-a se não for mais necessária.
+- A rota `/dev/asaas-status` continua disponível somente em Development e não é publicada em Production.
+- Este pacote não ativa `Development` no Render. Mantenha `ASPNETCORE_ENVIRONMENT=Production`.
+- A aplicação não executa migrations automaticamente. Aplique-as explicitamente antes do primeiro deploy que use o PIX.
