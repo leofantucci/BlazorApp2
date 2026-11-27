@@ -1,0 +1,130 @@
+@page "/vendas-comerciais/visualizar"
+@page "/painel-de-controle"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente")]
+@using TechToysDominio
+@using Repositorio
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<MyDBContext> ContextFactory
+
+<PageTitle>Painel de controle - E-commerce Infinity</PageTitle>
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Painel de controle - Placas Infinity</p></div>
+    <div class="d-flex flex-wrap gap-2 my-3">
+        <a class="btn btn-outline-primary" href="/produtos-comerciais/visualizar">Gerenciar produtos</a>
+        <a class="btn btn-outline-secondary" href="/ecommerce">Voltar ao e-commerce</a>
+    </div>
+    <div class="row g-3 mb-3">
+        <div class="col-sm-6 col-lg-3"><div class="card p-3 h-100"><small class="text-muted">Pedidos recebidos</small><h3>@_vendas.Count</h3></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card p-3 h-100"><small class="text-muted">Aguardando pagamento</small><h3>@_vendas.Count(v => v.Status == StatusVendaComercial.AguardandoPagamento)</h3></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card p-3 h-100"><small class="text-muted">Em produção</small><h3>@_vendas.Count(v => v.Status == StatusVendaComercial.EmProducao)</h3></div></div>
+        <div class="col-sm-6 col-lg-3"><div class="card p-3 h-100"><small class="text-muted">Total em pedidos não cancelados</small><h3>@_vendas.Where(v => v.Status != StatusVendaComercial.Cancelado).Sum(v => v.Total).ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</h3></div></div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(_mensagem)) { <div class="alert alert-info mt-3">@_mensagem</div> }
+    @if (_vendas.Count == 0)
+    {
+        <p class="texto-padrao-1 mt-3">Nenhum pedido recebido pela loja.</p>
+    }
+    else
+    {
+        <div class="table-responsive mt-3"><table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark"><tr><th>Nº / Itens</th><th>Cliente / Entrega</th><th>Data</th><th>Total</th><th>Status do pedido</th><th>Histórico</th><th>Pagamento</th><th>Atualizar</th></tr></thead>
+            <tbody>
+            @foreach (var venda in _vendas)
+            {
+                <tr @key="venda.Id">
+                    <td>#@venda.Id<br /><small>@venda.ItensVenda.Sum(i => i.Quantidade) item(ns)</small>
+                        <details class="small"><summary>Produtos</summary>@foreach (var item in venda.ItensVenda) { <div>@item.Quantidade x @item.ProdutoComercial.Nome</div> }</details></td>
+                    <td>@venda.Cliente.Nome<br /><small>@venda.Cliente.Email · @venda.Cliente.Telefone</small><br /><small>@venda.EnderecoEntrega, @venda.CidadeEntrega/@venda.EstadoEntrega · CEP @venda.CEPEntrega</small>@if (!string.IsNullOrWhiteSpace(venda.Observacoes)) { <details class="small"><summary>Observações</summary>@venda.Observacoes</details> }</td>
+                    <td>@venda.Data_Hora.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@venda.Total.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</td>
+                    <td>@venda.Status</td>
+                    <td>
+                        <details><summary>Ver alterações (@venda.Historico.Count)</summary>
+                            @foreach (var evento in venda.Historico.OrderByDescending(h => h.DataHoraUtc))
+                            {
+                                <div class="small mb-2"><strong>@evento.Status</strong><br />@evento.DataHoraUtc.ToLocalTime().ToString("dd/MM/yyyy HH:mm")<br />@evento.Observacao</div>
+                            }
+                        </details>
+                    </td>
+                    <td>
+                        @foreach (var pagamento in venda.Pagamentos)
+                        {
+                            <div>@pagamento.Status</div>
+                            @if (pagamento.Status == StatusPagamento.Pendente)
+                            {
+                                <button class="btn btn-sm btn-outline-success mt-1" @onclick="() => ConfirmarPagamentoManualAsync(venda.Id, pagamento.Id)">Confirmar manualmente</button>
+                            }
+                        }
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" value="@((int)venda.Status)" @onchange="e => AlterarStatusAsync(venda.Id, e.Value?.ToString())">
+                            @foreach (var status in Enum.GetValues<StatusVendaComercial>())
+                            {
+                                <option value="@((int)status)">@status</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table></div>
+    }
+</div>
+
+@code {
+    private List<VendaComercial> _vendas = new();
+    private string? _mensagem;
+    protected override async Task OnInitializedAsync() => await CarregarAsync();
+
+    private async Task CarregarAsync()
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        _vendas = await db.VendaComercial.AsNoTracking()
+            .Include(v => v.Cliente).Include(v => v.ItensVenda).ThenInclude(i => i.ProdutoComercial).Include(v => v.Pagamentos).Include(v => v.Historico)
+            .OrderByDescending(v => v.Data_Hora).ToListAsync();
+    }
+
+    private async Task ConfirmarPagamentoManualAsync(int vendaId, int pagamentoId)
+    {
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        var venda = await db.VendaComercial.Include(v => v.Pagamentos).FirstOrDefaultAsync(v => v.Id == vendaId);
+        if (venda is null) return;
+        var pagamento = venda.Pagamentos.FirstOrDefault(p => p.Id == pagamentoId);
+        if (pagamento is null || pagamento.Status != StatusPagamento.Pendente) return;
+        pagamento.Status = StatusPagamento.Aprovado;
+        pagamento.Metodo = "Confirmação manual";
+        pagamento.Provedor = "Gestão Infinity";
+        pagamento.DataConfirmacaoUtc = DateTime.UtcNow;
+        venda.Status = StatusVendaComercial.Pago;
+        venda.Historico.Add(new ControleComercial
+        {
+            Status = StatusVendaComercial.Pago,
+            DataHoraUtc = DateTime.UtcNow,
+            Observacao = "Pagamento confirmado manualmente pela equipe administrativa."
+        });
+        await db.SaveChangesAsync();
+        _mensagem = $"Pagamento do pedido #{vendaId} marcado como aprovado manualmente.";
+        await CarregarAsync();
+    }
+
+    private async Task AlterarStatusAsync(int vendaId, string? valor)
+    {
+        if (!int.TryParse(valor, out var numero) || !Enum.IsDefined(typeof(StatusVendaComercial), numero)) return;
+        await using var db = await ContextFactory.CreateDbContextAsync();
+        var venda = await db.VendaComercial.FirstOrDefaultAsync(v => v.Id == vendaId);
+        if (venda is null) return;
+        var novoStatus = (StatusVendaComercial)numero;
+        if (venda.Status == novoStatus) return;
+        venda.Status = novoStatus;
+        venda.Historico.Add(new ControleComercial
+        {
+            Status = novoStatus,
+            DataHoraUtc = DateTime.UtcNow,
+            Observacao = "Status atualizado pela administração do Gestão Infinity."
+        });
+        await db.SaveChangesAsync();
+        _mensagem = $"Pedido #{vendaId} atualizado para {novoStatus}.";
+        await CarregarAsync();
+    }
+}

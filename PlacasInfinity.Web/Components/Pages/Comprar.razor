@@ -1,0 +1,153 @@
+@page "/comprar"
+@page "/comprar/{ProdutoId:int}"
+@inject LojaService Loja
+@inject CarrinhoState Carrinho
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+
+<PageTitle>Finalizar compra | Placas Infinity</PageTitle>
+<div class="store-shell checkout-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a><a href="/" class="back-link">← Voltar à loja</a></header>
+    @if (_carregando)
+    {
+        <p class="store-message">Conferindo seu carrinho...</p>
+    }
+    else if (_itens.Count == 0)
+    {
+        <div class="empty-catalog"><h2>Seu carrinho está vazio</h2><p>Adicione ao menos um produto antes de finalizar a compra.</p><a class="store-primary" href="/#produtos">Explorar produtos</a></div>
+    }
+    else
+    {
+        <div class="checkout-layout">
+                <h2>Deseja entrar com sua conta?</h2>
+                <button type="button" class="btn btn-secondary mt-3" @onclick="login">Login/Cadastro</button>
+                
+            <section class="checkout-form-card">
+                <span class="eyebrow">FINALIZAÇÃO</span>
+                <h1>Seus dados</h1>
+                <p>Os dados da sua conta aparecem preenchidos automaticamente. Você pode ajustá-los para esta entrega.</p>
+                <EditForm Model="_dados" OnValidSubmit="FinalizarAsync" FormName="CheckoutPlacasInfinity">
+                    <DataAnnotationsValidator/>
+                    <ValidationSummary/>
+                    <div class="form-grid">
+                        <label class="form-field full">Nome completo<InputText @bind-Value="_dados.Nome"/></label>
+                        <label class="form-field">E-mail<InputText type="email" @bind-Value="_dados.Email"/></label>
+                        <label class="form-field">CPF ou CNPJ<InputText @bind-Value="_dados.Documento" maxlength="18" /></label>
+                        <label class="form-field">Telefone<InputText @bind-Value="_dados.Telefone"/></label>
+                        <label class="form-field full">Endereço e número<InputText @bind-Value="_dados.Endereco"/></label>
+                        <label class="form-field">Cidade<InputText @bind-Value="_dados.Cidade"/></label>
+                        <label class="form-field">Estado (UF)<InputText maxlength="2" @bind-Value="_dados.Estado"/></label>
+                        <label class="form-field">CEP<InputText @bind-Value="_dados.CEP"/></label>
+                        <label class="form-field full">Observações (opcional)<InputText @bind-Value="_dados.Observacoes"/></label>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(_erro))
+                    {
+                        <p class="store-error">@_erro</p>
+                    }
+                    <button class="store-primary submit-button" type="submit" disabled="@_enviando">@(_enviando ? "Registrando pedido..." : "Confirmar pedido")</button>
+                    <p class="checkout-disclaimer">Após confirmar, será gerado um PIX seguro pelo Asaas. O pedido só será aprovado após a confirmação do pagamento.</p>
+                </EditForm>
+            </section>
+            <aside class="order-summary">
+                <span class="eyebrow">RESUMO</span><h2>Seu pedido</h2>
+                @foreach (var item in _itens)
+                {
+                    <div class="summary-product" @key="item.Produto.Id">
+                        @if (!string.IsNullOrWhiteSpace(item.Produto.Foto)) { <img src="@item.Produto.Foto" alt="@item.Produto.Nome" /> }
+                        else { <div class="summary-placeholder">∞</div> }
+                        <div><strong>@item.Produto.Nome</strong><span>Qtd. @item.Quantidade × @item.Produto.Preco.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</span><span>@((item.Produto.Preco * item.Quantidade).ToString("C2", new System.Globalization.CultureInfo("pt-BR")))</span></div>
+                    </div>
+                }
+                <div class="summary-total"><span>Total parcial</span><strong>@Total.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong></div>
+                <small>Pagamento via PIX processado pelo Asaas.</small>
+                <a class="checkout-back-cart" href="/#produtos">← Continuar comprando</a>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int ProdutoId { get; set; }
+    private readonly CheckoutInput _dados = new();
+    private readonly List<(ProdutoComercial Produto, int Quantidade)> _itens = new();
+    private bool _carregando = true;
+    private bool _enviando;
+    private bool _produtoInicialAdicionado;
+    private string? _erro;
+    private int? _usuarioComercialId;
+    private bool _dadosCarregados;
+    private decimal Total => _itens.Sum(i => i.Produto.Preco * i.Quantidade);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _carregando = true;
+        if (!_dadosCarregados)
+        {
+            var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var id = auth.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(id, out var usuarioId))
+            {
+                _usuarioComercialId = usuarioId;
+                var salvo = await Loja.ObterCheckoutClienteAsync(usuarioId);
+                if (salvo is not null)
+                {
+                    _dados.Nome = salvo.Nome; _dados.Email = salvo.Email; _dados.Documento = salvo.Documento; _dados.Telefone = salvo.Telefone;
+                    _dados.Endereco = salvo.Endereco; _dados.Cidade = salvo.Cidade;
+                    _dados.Estado = salvo.Estado; _dados.CEP = salvo.CEP;
+                }
+            }
+            _dadosCarregados = true;
+        }
+        if (ProdutoId > 0 && !_produtoInicialAdicionado)
+        {
+            Carrinho.Adicionar(ProdutoId);
+            _produtoInicialAdicionado = true;
+        }
+        _itens.Clear();
+        foreach (var item in Carrinho.Itens)
+        {
+            var produto = await Loja.ObterProdutoAsync(item.Key);
+            if (produto is not null && item.Value > 0)
+                _itens.Add((produto, item.Value));
+        }
+        _carregando = false;
+    }
+
+    private async Task FinalizarAsync()
+    {
+        if (_itens.Count == 0 || _enviando) return;
+        _enviando = true;
+        _erro = null;
+        try
+        {
+            var itens = _itens.Select(i => new ItemCarrinhoInput
+            {
+                ProdutoComercialId = i.Produto.Id,
+                Quantidade = i.Quantidade
+            }).ToList();
+            var vendaId = await Loja.CriarVendaAsync(_dados, itens, _usuarioComercialId);
+            Carrinho.Limpar();
+            try
+            {
+                await Loja.GerarCobrancaPixAsync(vendaId);
+            }
+            catch
+            {
+                // O pedido fica preservado para que a cobrança possa ser tentada novamente na página do pedido.
+            }
+            Navigation.NavigateTo($"/pedido/{vendaId}");
+        }
+        catch (Exception ex)
+        {
+            _erro = ex.Message;
+        }
+        finally { _enviando = false; }
+    }
+    
+    
+    private void login()
+    {
+        Navigation.NavigateTo("/conta");
+    }
+}

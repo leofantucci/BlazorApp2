@@ -1,0 +1,16 @@
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <div class="store-shell account-shell">
+                    <div class="empty-catalog">
+                        <h2>Entre na sua conta para continuar</h2>
+                        <p>Esta área é exclusiva para clientes cadastrados.</p>
+                        <a class="store-primary" href="/conta">Entrar ou cadastrar</a>
+                    </div>
+                </div>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>

@@ -1,0 +1,51 @@
+@page "/meus-pedidos"
+@attribute [Authorize]
+@inject ContaService Conta
+@inject AuthenticationStateProvider AuthProvider
+@using System.Security.Claims
+
+<PageTitle>Meus pedidos | Placas Infinity</PageTitle>
+<div class="store-shell account-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a><a class="back-link" href="/minha-conta">← Minha conta</a></header>
+    <main class="orders-page">
+        <span class="eyebrow">ACOMPANHAMENTO</span><h1>Meus pedidos</h1>
+        <p class="orders-intro">Consulte seus pedidos e acompanhe o andamento de cada compra.</p>
+        @if (_carregando) { <p class="store-message">Buscando seus pedidos...</p> }
+        else if (_pedidos.Count == 0) { <div class="empty-catalog"><h2>Você ainda não tem pedidos.</h2><p>Quando fizer sua primeira compra, ela aparecerá aqui.</p><a class="store-primary" href="/#produtos">Explorar produtos</a></div> }
+        else
+        {
+            <div class="orders-list">
+                @foreach (var pedido in _pedidos)
+                {
+                    <article class="order-card" @key="pedido.Id">
+                        <div class="order-card-top"><div><span class="eyebrow">PEDIDO #@pedido.Id</span><p>@pedido.Data_Hora.ToLocalTime().ToString("dd/MM/yyyy 'às' HH:mm")</p></div><span class="order-status">@StatusTexto(pedido.Status)</span></div>
+                        <div class="order-items">@foreach (var item in pedido.ItensVenda) { <span>@item.Quantidade × @item.ProdutoComercial.Nome</span> }</div>
+                        <div class="order-card-bottom"><strong>@pedido.Total.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong><span>@pedido.ItensVenda.Sum(x => x.Quantidade) item(ns)</span></div>
+                    </article>
+                }
+            </div>
+        }
+    </main>
+</div>
+@code {
+    private List<VendaComercial> _pedidos = new();
+    private bool _carregando = true;
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var raw = state.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (int.TryParse(raw, out var id)) _pedidos = await Conta.ListarPedidosAsync(id);
+        _carregando = false;
+    }
+    private static string StatusTexto(StatusVendaComercial status) => status switch
+    {
+        StatusVendaComercial.AguardandoPagamento => "Aguardando pagamento",
+        StatusVendaComercial.Pago => "Pagamento confirmado",
+        StatusVendaComercial.EmProducao => "Em produção",
+        StatusVendaComercial.Pronto => "Pronto",
+        StatusVendaComercial.Enviado => "Enviado",
+        StatusVendaComercial.Recebido => "Entregue",
+        StatusVendaComercial.Cancelado => "Cancelado",
+        _ => status.ToString()
+    };
+}

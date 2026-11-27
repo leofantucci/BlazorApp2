@@ -1,0 +1,147 @@
+@page "/pedido/{VendaId:int}"
+@implements IDisposable
+@inject LojaService Loja
+@inject IJSRuntime JS
+
+<PageTitle>Pagamento PIX | Placas Infinity</PageTitle>
+<div class="store-shell confirmation-shell">
+    <header class="store-header"><a class="store-brand" href="/">∞ <span>PLACAS INFINITY</span></a></header>
+    @if (_carregando)
+    {
+        <p class="store-message">Consultando pedido...</p>
+    }
+    else if (_venda is null)
+    {
+        <div class="empty-catalog"><h2>Pedido não encontrado</h2><a href="/">Voltar à loja</a></div>
+    }
+    else
+    {
+        <section class="confirmation-card pix-confirmation">
+            <div class="confirmation-icon">@(_pagamento?.Status == StatusPagamento.Aprovado ? "✓" : "₱")</div>
+            <span class="eyebrow">PEDIDO #@_venda.Id</span>
+            <h1>@(_pagamento?.Status == StatusPagamento.Aprovado ? "Pagamento confirmado!" : "Finalize seu pagamento")</h1>
+            <p>Seu pedido foi registrado. O status é atualizado após a confirmação recebida do Asaas.</p>
+            <div class="confirmation-details">
+                <span>Status do pedido</span><strong>@DescricaoStatusVenda(_venda.Status)</strong>
+                <span>Status do PIX</span><strong>@DescricaoStatusPagamento(_pagamento)</strong>
+                <span>Total</span><strong>@_venda.Total.ToString("C2", new System.Globalization.CultureInfo("pt-BR"))</strong>
+            </div>
+            @if (_pagamento?.Status == StatusPagamento.Aprovado)
+            {
+                <p class="pix-success">Pagamento identificado e registrado no sistema.</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(_pagamento?.PixQrCodeBase64))
+            {
+                <div class="pix-panel">
+                    <h2>Escaneie o QR Code PIX</h2>
+                    <img class="pix-qr" src="data:image/png;base64,@_pagamento.PixQrCodeBase64" alt="QR Code PIX do pedido @_venda.Id" />
+                    <label for="pix-payload">PIX Copia e Cola</label>
+                    <textarea id="pix-payload" readonly>@_pagamento.PixCopiaECola</textarea>
+                    <button class="store-primary" type="button" @onclick="CopiarPixAsync">Copiar código PIX</button>
+                    @if (_pagamento.PixExpiracaoUtc.HasValue)
+                    {
+                        <small>Expira em @_pagamento.PixExpiracaoUtc.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="store-message">A cobrança PIX ainda não foi gerada.</p>
+                <button class="store-primary" type="button" @onclick="GerarPixAsync" disabled="@_gerando">@(_gerando ? "Gerando PIX..." : "Gerar / tentar novamente PIX")</button>
+            }
+            @if (!string.IsNullOrWhiteSpace(_erro)) { <p class="store-error">@_erro</p> }
+            <a class="checkout-back-cart" href="/">Voltar à loja</a>
+            <small>Não feche esta página se quiser acompanhar a atualização. A confirmação depende do retorno oficial do Asaas.</small>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int VendaId { get; set; }
+    private VendaComercial? _venda;
+    private Pagamento? _pagamento;
+    private bool _carregando = true;
+    private bool _gerando;
+    private string? _erro;
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _timerCts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await AtualizarAsync();
+        _timerCts?.Cancel();
+        _timerCts?.Dispose();
+        _timerCts = new CancellationTokenSource();
+        _timer = new PeriodicTimer(TimeSpan.FromSeconds(8));
+        _ = AcompanharAsync(_timer, _timerCts.Token);
+    }
+
+    private async Task AcompanharAsync(PeriodicTimer timer, CancellationToken ct)
+    {
+        try
+        {
+            while (await timer.WaitForNextTickAsync(ct))
+                await InvokeAsync(AtualizarAsync);
+        }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
+    }
+
+    private async Task AtualizarAsync()
+    {
+        var dados = await Loja.ObterPedidoPagamentoAsync(VendaId);
+        _venda = dados.Venda;
+        _pagamento = dados.Pagamento;
+        _carregando = false;
+        StateHasChanged();
+    }
+
+    private async Task GerarPixAsync()
+    {
+        if (_gerando) return;
+        _gerando = true; _erro = null;
+        try { await Loja.GerarCobrancaPixAsync(VendaId); await AtualizarAsync(); }
+        catch (Exception ex) { _erro = ex.Message; }
+        finally { _gerando = false; }
+    }
+
+    private async Task CopiarPixAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(_pagamento?.PixCopiaECola))
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", _pagamento.PixCopiaECola);
+    }
+
+    private static string DescricaoStatusVenda(StatusVendaComercial status) => status switch
+    {
+        StatusVendaComercial.AguardandoPagamento => "Aguardando pagamento",
+        StatusVendaComercial.Pago => "Pago",
+        StatusVendaComercial.EmProducao => "Em produção",
+        StatusVendaComercial.Pronto => "Pronto",
+        StatusVendaComercial.Enviado => "Enviado",
+        StatusVendaComercial.Recebido => "Recebido",
+        StatusVendaComercial.Cancelado => "Cancelado",
+        _ => status.ToString()
+    };
+
+    private static string DescricaoStatusPagamento(Pagamento? pagamento)
+    {
+        if (pagamento?.StatusProvedor == "CONFIRMED" && pagamento.Status == StatusPagamento.Pendente)
+            return "Pagamento confirmado; aguardando disponibilidade";
+        return pagamento?.Status switch
+        {
+        StatusPagamento.Pendente => "Pendente",
+        StatusPagamento.Aprovado => "Confirmado",
+        StatusPagamento.Recusado => "Recusado",
+        StatusPagamento.Estornado => "Estornado",
+        StatusPagamento.Cancelado => "Cancelado",
+        _ => "Não disponível"
+        };
+    }
+
+    public void Dispose()
+    {
+        _timerCts?.Cancel();
+        _timer?.Dispose();
+        _timerCts?.Dispose();
+    }
+}

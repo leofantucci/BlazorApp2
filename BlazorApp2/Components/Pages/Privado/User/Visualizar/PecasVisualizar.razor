@@ -1,0 +1,27 @@
+﻿@page "/pecas/visualizar"
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "admin, gerente, funcionario")]
+@using TechToysDominio
+@using Repositorio
+@inject RepositorioTechToys RepositorioTechToys
+<PageTitle>Peças cadastradas</PageTitle>
+<div class="centralizado">
+    <div class="faixaNinja corSecundaria"><p>Peças cadastradas</p></div>
+    <div class="area-botoes gap-2 my-3">
+        <AuthorizeView Roles="admin, gerente">
+            <a class="btn btn-primary" href="/pecas/cadastrar">Nova Peça</a>
+            <a class="btn btn-primary" href="/pecas/editar">Editar Peça</a>
+            <a class="btn btn-danger" href="/pecas/remover">Remover Peça</a>
+        </AuthorizeView>
+    </div>
+    <table class="table table-striped table-bordered">
+        <thead><tr><th>ID</th><th>Nome</th><th>Matérias-primas / cores</th><th>Impressora</th><th>Peso</th><th>Tempo de produção</th><th>Estoque</th><th>Status</th></tr></thead>
+        <tbody>
+        @foreach (var peca in pecas)
+        {
+            <tr><td>@peca.Id</td><td>@peca.Nome</td><td>@(peca.MateriasPrimas.Count > 0 ? string.Join("; ", peca.MateriasPrimas.Select(m => $"{m.MateriaPrima.Nome}: {m.Peso:N3} g")) : (peca.Materia_Prima?.Nome ?? "Não informada"))</td><td>@(peca.Impressora?.Modelo ?? "Não informada")</td><td>@peca.Peso_Impressao.ToString("N3") g</td><td>@FormatarTempo(peca.Tempo_Impressao)</td><td>@(RepositorioTechToys.ObterQuantidadeEstoque<Peca>(peca.Id).ToString("N0")) UN</td><td>@(peca.Ativo ? "Ativa" : "Inativa")</td></tr>
+        }
+        </tbody>
+    </table>
+</div>
+@code { private List<Peca> pecas = new(); protected override void OnInitialized() => pecas = RepositorioTechToys.ListarTodos<Peca>(); private static string FormatarTempo(double minutos) => minutos <= 0 ? "Não informado" : TimeSpan.FromMinutes(minutos).TotalDays >= 1 ? TimeSpan.FromMinutes(minutos).ToString(@"d\d\ hh\h\ mm\m") : TimeSpan.FromMinutes(minutos).ToString(@"hh\h\ mm\m"); }
